@@ -20,7 +20,7 @@
 #include <memory>
 #include "../../utils/VariantUtil.h"
 
-using ShaderType = std::variant<bool, int, float, glm::vec3, glm::vec4, glm::mat4, glm::vec3*>;
+using ShaderType = std::variant<bool, int, float, glm::vec2, glm::vec3, glm::vec4, glm::mat4, glm::vec3*>;
 
 class Shader {
 public:
@@ -42,6 +42,7 @@ public:
                 [&](bool &v) { glUniform1i(glGetUniformLocation(ID, name.c_str()), (int) v); },
                 [&](int &v) { glUniform1i(glGetUniformLocation(ID, name.c_str()), v); },
                 [&](float &v) { glUniform1f(glGetUniformLocation(ID, name.c_str()), v); },
+                [&](glm::vec2 &v) { glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, &v[0]); },
                 [&](glm::vec3 &v) { glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &v[0]); },
                 [&](glm::vec4 &v) { glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &v[0]); },
                 [&](glm::mat4 &v) { glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &v[0][0]); },

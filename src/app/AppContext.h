@@ -12,6 +12,9 @@
 #include "../opengl/shader/Shader.h"
 #include "entity/light/PointLight.h"
 #include "entity/point/Point.h"
+#include "gcode/GCodeParser.h"
+#include "../opengl/mesh/PositionVertex.h"
+#include "../opengl/texture/Texture.h"
 
 struct AppContext {
     AppContext() = default;
@@ -22,11 +25,25 @@ struct AppContext {
     // Shaders
     std::unique_ptr<Shader> phongShader;
     std::unique_ptr<Shader> pointShader;
+    std::unique_ptr<Shader> basicShader;
+    std::unique_ptr<Shader> millingBaseShader;
 
     // TODO --- App data goes here
     std::unique_ptr<PointLight> light;
     std::unique_ptr<Point> lightBulb;
     std::unique_ptr<Quad> quad;
+
+    std::unique_ptr<GCodeParser> gCodeParser;
+
+    std::vector<glm::vec3> path;
+
+    std::unique_ptr<Mesh<PositionVertex>> pathModel;
+    std::unique_ptr<Mesh<EmptyVertex>> base;
+
+    std::unique_ptr<Texture> heightMap;
+
+    glm::vec2 heightMapSize;
+    glm::vec3 baseDimensions;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

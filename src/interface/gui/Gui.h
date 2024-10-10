@@ -17,6 +17,10 @@ public:
     void render();
 
     void renderLightUI(PointLight &light);
+
+    void renderMainMenu();
+
+    void renderMenuItemLoadModel();
 };
 
 

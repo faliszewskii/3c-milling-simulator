@@ -11,7 +11,7 @@
 
 CameraAnchor::CameraAnchor(int screenWidth, int screenHeight, glm::vec3 position, glm::vec3 anchor, glm::quat orientation) :
     orientation(orientation), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoomSensitivity(ZOOM_SENSITIVITY),
-    position(position), anchor(anchor), nearPlane(0.01), farPlane(100), fov(45.f)
+    position(position), anchor(anchor), nearPlane(0.01), farPlane(1000), fov(45.f)
 {
     BaseCamera::screenWidth = screenWidth;
     BaseCamera::screenHeight = screenHeight;

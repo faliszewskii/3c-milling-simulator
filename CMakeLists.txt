@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(opengl_template)
+project(Milling_Simulator)
 
 set(CMAKE_CXX_STANDARD 26)
 
@@ -50,10 +50,14 @@ set(APP_SRC
         src/app/Scene.cpp
         src/app/Scene.h
         src/app/entity/light/PointLight.h
-        src/app/entity/point/Point.h)
+        src/app/entity/point/Point.h
+        src/app/gcode/GCodeParser.cpp
+        src/app/gcode/GCodeParser.h
+        src/opengl/texture/Texture.cpp
+)
 
 # Add executables
-add_executable(OpenGL_Template
+add_executable(Milling_Simulator
         # Dependencies
         ${IMGUI_SRC}
         ${CMAKE_SOURCE_DIR}/src/glad.c
@@ -62,10 +66,14 @@ add_executable(OpenGL_Template
         ${APP_SRC}
 )
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/dep/nativefiledialog-extended)
+
+include_directories(dep/nativefiledialog-extended)
 
 # Link libraries
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")             # macOS
-    target_link_libraries(OpenGL_Template
+    target_link_libraries(Milling_Simulator
+            nfd
             ${CMAKE_SOURCE_DIR}/dep/lib/libglfw.3.4.dylib
             ${CMAKE_SOURCE_DIR}/dep/lib/libGLEW.2.2.0.dylib
             "-framework OpenGL"
@@ -77,13 +85,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")             # macOS
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")        # Windows
     find_package(OpenGL REQUIRED)
     include_directories( ${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Template
+    target_link_libraries(Milling_Simulator
             ${CMAKE_SOURCE_DIR}/dep/lib/glfw3.lib
             ${CMAKE_SOURCE_DIR}/dep/lib/glew32.lib
             ${OPENGL_LIBRARIES}
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")          # Linux
-    target_link_libraries(OpenGL_Template
+    target_link_libraries(Milling_Simulator PRIVATE
             -lglfw
             -lGLEW
             -lGL
@@ -92,5 +100,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")          # Linux
             -lXrandr
             -lXi
             -ldl
+            nfd
     )
 endif()
