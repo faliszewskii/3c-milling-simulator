@@ -15,6 +15,8 @@
 #include "gcode/GCodeParser.h"
 #include "../opengl/mesh/PositionVertex.h"
 #include "../opengl/texture/Texture.h"
+#include "entity/mill/MillModel.h"
+#include "mill/Mill.h"
 
 struct AppContext {
     AppContext() = default;
@@ -35,15 +37,20 @@ struct AppContext {
 
     std::unique_ptr<GCodeParser> gCodeParser;
 
-    std::vector<glm::vec3> path;
+    std::unique_ptr<Mill> mill;
 
     std::unique_ptr<Mesh<PositionVertex>> pathModel;
     std::unique_ptr<Mesh<EmptyVertex>> base;
 
+    std::vector<std::vector<float>> heightMapData;
     std::unique_ptr<Texture> heightMap;
 
     glm::vec2 heightMapSize;
     glm::vec3 baseDimensions;
+
+    float lastFrameTime;
+    bool running;
+
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

@@ -43,13 +43,7 @@ void Gui::renderMenuItemLoadModel() {
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 0, NULL);
     if (result == NFD_OKAY) {
         try {
-            auto points = appContext.gCodeParser->parse(outPath);
-            appContext.path = points;
-
-            std::vector<PositionVertex> vertices;
-            std::transform(points.begin(), points.end(), std::back_inserter(vertices),
-                           [](glm::vec3 v){ return PositionVertex(v);});
-            appContext.pathModel->update(std::move(vertices), std::nullopt);
+            setupPath(outPath);
         } catch (std::exception &ex) {
             // TODO Log error to log window.
             std::cerr << ex.what() << std::endl;
@@ -62,4 +56,31 @@ void Gui::renderMenuItemLoadModel() {
 
     NFD_Quit();
 //        }
+}
+
+void Gui::setupPath(const std::string& outPath) {
+    std::string millType = outPath.substr(outPath.size()-3, 1);
+    switch(millType[0]) {
+        case 'k':
+            appContext.mill->setType(Spherical);
+            break;
+        case 'f':
+            appContext.mill->setType(Flat);
+            break;
+        default:
+            throw std::runtime_error("Wrong file extension");
+    }
+
+    std::string millDiameter = outPath.substr(outPath.size()-2, 2);
+    float millRadius = std::stoi(millDiameter) / 2.f;
+    appContext.mill->setRadius(millRadius);
+
+    auto points = appContext.gCodeParser->parse(outPath);
+    appContext.mill->setPath(points);
+    appContext.lastFrameTime = glfwGetTime();
+
+    std::vector<PositionVertex> vertices;
+    std::transform(points.begin(), points.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
 }

@@ -21,6 +21,8 @@ public:
     void renderMainMenu();
 
     void renderMenuItemLoadModel();
+
+    void setupPath(const std::string& outPath);
 };
 
 

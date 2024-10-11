@@ -55,7 +55,7 @@ void main() {
     vec2 cubeSizeHalf = cubeSize / 2.f;
 
     // Map to grid position in world space
-    vec3 gridPosition = vec3(float(col)/uGridSize.x * uBaseSize.x - uBaseSize.x/2.f, 0.0, float(row)/uGridSize.x * uBaseSize.y - uBaseSize.y/2.f);
+    vec3 gridPosition = vec3(float(col)/uGridSize.x * uBaseSize.x - uBaseSize.x/2.f, 0.0, float(row)/uGridSize.y * uBaseSize.y - uBaseSize.y/2.f);
 
 
     vec2 uv;

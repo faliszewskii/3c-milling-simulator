@@ -18,10 +18,10 @@ Texture::Texture(int x, int y, int nrChannels, int internalFormat, int format, i
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(target, id);
 
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     switch (target) {
         case GL_TEXTURE_2D:

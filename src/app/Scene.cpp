@@ -24,30 +24,55 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 
     appContext.quad = std::make_unique<Quad>();
     appContext.light = std::make_unique<PointLight>();
-    appContext.light->position = {0.0f , 0.0f, 0.25f};
+    appContext.light->position = {0.0f , 100.0f, 100.f};
     appContext.lightBulb = std::make_unique<Point>();
 
+    appContext.mill = std::make_unique<Mill>(40, 8, glm::vec3(0, 60, 0), 300);
+
     appContext.gCodeParser = std::make_unique<GCodeParser>();
-    appContext.path = std::make_unique<Mesh<PositionVertex>>(std::vector<PositionVertex>(), std::nullopt, GL_LINE_STRIP);
+
+    appContext.pathModel = std::make_unique<Mesh<PositionVertex>>(std::vector<PositionVertex>(), std::nullopt, GL_LINE_STRIP);
     appContext.base = std::make_unique<Mesh<EmptyVertex>>(Mesh<EmptyVertex>({EmptyVertex{}}, std::nullopt, GL_POINTS));
 
     appContext.baseDimensions = {150, 50, 150};
 
-    appContext.heightMapSize = glm::vec2(64);
+    appContext.heightMapSize = glm::vec2(256);
+    for(int i = 0; i < appContext.heightMapSize.x; i++) {
+        appContext.heightMapData.emplace_back();
+        for(int j = 0; j < appContext.heightMapSize.y; j++)
+            appContext.heightMapData.back().push_back(appContext.baseDimensions.y);
+    }
+    appContext.heightMap = std::make_unique<Texture>(appContext.heightMapSize.x, appContext.heightMapSize.y, 1, GL_RED, GL_RED, GL_FLOAT, GL_TEXTURE_2D,
+                                                     nullptr);
+
     std::vector<float> t(appContext.heightMapSize.x*appContext.heightMapSize.y);
     for(int i = 0; i < appContext.heightMapSize.x; i++)
         for(int j = 0; j < appContext.heightMapSize.y; j++)
-            t[i*appContext.heightMapSize.y + j] = (40 + 10*sin(0.15*i) + 10*cos(0.1*j))/50;
-    appContext.heightMap = std::make_unique<Texture>(appContext.heightMapSize.x, appContext.heightMapSize.y, 1, GL_RED, GL_RED, GL_FLOAT, GL_TEXTURE_2D,
-                                                     nullptr);
+            t[i*appContext.heightMapSize.y + j] = appContext.heightMapData[i][j]/appContext.baseDimensions.y;
     appContext.heightMap->update2D(t.data());
 
+    appContext.lastFrameTime = 0;
+    appContext.running = false;
 }
 
 void Scene::update() {
     // TODO --- Here goes scene data update.
     appContext.lightBulb->position = appContext.light->position;
     appContext.lightBulb->color = glm::vec4(appContext.light->color, 1);
+
+    float time = glfwGetTime();
+    float deltaTime = time - appContext.lastFrameTime;
+    appContext.running = true;
+    if(appContext.running) {
+        appContext.mill->advance(appContext.heightMapData, appContext.baseDimensions, deltaTime);
+
+        std::vector<float> t(appContext.heightMapSize.x*appContext.heightMapSize.y);
+        for(int i = 0; i < appContext.heightMapSize.x; i++)
+            for(int j = 0; j < appContext.heightMapSize.y; j++)
+                t[i*appContext.heightMapSize.y + j] = appContext.heightMapData[i][j]/appContext.baseDimensions.y;
+        appContext.heightMap->update2D(t.data());
+    }
+    appContext.lastFrameTime = time;
 }
 
 void Scene::render() {
@@ -74,6 +99,16 @@ void Scene::render() {
     appContext.light->setupPointLight(*appContext.millingBaseShader);
     appContext.base->render(1500*1500);
 
+    appContext.phongShader->use();
+    appContext.phongShader->setUniform("viewPos", appContext.camera->getViewPosition());
+    appContext.phongShader->setUniform("view", appContext.camera->getViewMatrix());
+    appContext.phongShader->setUniform("projection", appContext.camera->getProjectionMatrix());
+    appContext.phongShader->setUniform("model", glm::identity<glm::mat4>());
+    appContext.phongShader->setUniform("material.hasTexture", false);
+    appContext.phongShader->setUniform("material.albedo", glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+    appContext.phongShader->setUniform("material.shininess", 256.f);
+    appContext.light->setupPointLight(*appContext.phongShader);
+    appContext.mill->render(*appContext.phongShader);
 
     appContext.frameBufferManager->unbind();
 }

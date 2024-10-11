@@ -54,6 +54,17 @@ set(APP_SRC
         src/app/gcode/GCodeParser.cpp
         src/app/gcode/GCodeParser.h
         src/opengl/texture/Texture.cpp
+        src/app/entity/mill/MillModel.cpp
+        src/app/entity/mill/MillModel.h
+        src/app/entity/sphere/Sphere.cpp
+        src/app/entity/cylinder/Cylinder.cpp
+        src/app/algorithm/Bresenham.cpp
+        src/app/algorithm/Bresenham.h
+        src/app/mill/Mill.cpp
+        src/app/mill/Mill.h
+        src/app/mill/MillType.h
+        src/app/algorithm/Bresenham3D.cpp
+        src/app/algorithm/Bresenham3D.h
 )
 
 # Add executables
