@@ -65,6 +65,8 @@ set(APP_SRC
         src/app/mill/MillType.h
         src/app/algorithm/Bresenham3D.cpp
         src/app/algorithm/Bresenham3D.h
+        src/app/heightmap/HeightMap.cpp
+        src/app/heightmap/HeightMap.h
 )
 
 # Add executables
