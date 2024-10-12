@@ -27,7 +27,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.light->position = {0.0f , 100.0f, 100.f};
     appContext.lightBulb = std::make_unique<Point>();
 
-    appContext.mill = std::make_unique<Mill>(40, 8, glm::vec3(0, 60, 0), 300);
+    appContext.mill = std::make_unique<Mill>(40, 8, glm::vec3(0, 60, 0), 500);
 
     appContext.gCodeParser = std::make_unique<GCodeParser>();
 
@@ -36,7 +36,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 
     appContext.baseDimensions = {150, 50, 150};
 
-    appContext.heightMapSize = glm::vec2(256);
+    appContext.heightMapSize = glm::vec2(600);
     for(int i = 0; i < appContext.heightMapSize.x; i++) {
         appContext.heightMapData.emplace_back();
         for(int j = 0; j < appContext.heightMapSize.y; j++)

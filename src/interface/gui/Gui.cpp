@@ -74,6 +74,7 @@ void Gui::setupPath(const std::string& outPath) {
     std::string millDiameter = outPath.substr(outPath.size()-2, 2);
     float millRadius = std::stoi(millDiameter) / 2.f;
     appContext.mill->setRadius(millRadius);
+    appContext.mill->setHeight(millRadius*6);
 
     auto points = appContext.gCodeParser->parse(outPath);
     appContext.mill->setPath(points);

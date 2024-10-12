@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <expected>
+#include "../algorithm/Bresenham.h"
 
 Mill::Mill(float height, float radius, glm::vec3 position, float velocity) {
     type = Spherical;
@@ -59,9 +60,9 @@ std::expected<void, std::string> Mill::mill(std::vector<std::vector<float>> &hei
 
     int p1Col = (p1.x + baseDimensions.x/2.f) / baseDimensions.x * heightMap[0].size();
     int p1Row = (p1.z + baseDimensions.z/2.f) / baseDimensions.z * heightMap.size();
+    int p2Col = (p2.x + baseDimensions.x/2.f) / baseDimensions.x * heightMap[0].size();
+    int p2Row = (p2.z + baseDimensions.z/2.f) / baseDimensions.z * heightMap.size();
 
-    // TODO Spherical
-    // TODO Check pixel rectangle vs sphere collision
     int rx = (radius) / baseDimensions.x * heightMap[0].size() + 2;
     int rz = (radius) / baseDimensions.z * heightMap.size() + 2;
 
@@ -89,26 +90,31 @@ std::expected<void, std::string> Mill::mill(std::vector<std::vector<float>> &hei
         }
     }
 
-//    for(int row = 0; row < heightMap.size(); row++) {
-//        for(int col = 0; col < heightMap[0].size(); col++) {
-//
-//
-//            glm::vec3 gridPosition = glm::vec3(float(col)/heightMap[0].size() * baseDimensions.x - baseDimensions.x/2.f, 0.0, float(row)/heightMap.size() * baseDimensions.z - baseDimensions.z/2.f);
-//            // TODO For now check only if middle(lefttop) inside a circle
-//
-//            if(std::pow(gridPosition.x - p1.x, 2) + std::pow(gridPosition.z - p1.z, 2) > radius*radius)
-//                continue;
-//
-//            if(heightMap[row][col] > p1.y)
-//                heightMap[row][col] = p1.y;
-//            // TODO Add spherical mill
-////            auto AB = direction;
-////            auto AP = P - p1;
-////            float lengthSqrAB = AB.x * AB.x + AB.y * AB.y;
-////            float t = (AP.x * AB.x + AP.y * AB.y) / lengthSqrAB;
-////            float height = (p1 + t * direction).y;
-//        }
-//    }
+    glm::vec3 perpendicular = glm::normalize(glm::cross(glm::normalize(direction), glm::vec3(0, 1, 0)));
+    glm::vec<2, int> pixelMiddle = glm::vec<2, int>(p1Col, p1Row);
+    glm::vec<2, int> pixelBottom = pixelMiddle - glm::vec<2, int>(perpendicular.x* rx, perpendicular.z* rz);
+    glm::vec<2, int> pixelTop = pixelMiddle + glm::vec<2, int>(perpendicular.x* rx, perpendicular.z* rz);
+    bresenham(pixelBottom.x, pixelBottom.y, pixelTop.x, pixelTop.y, [&](int x, int y, float t) {
+        glm::vec3 gridPosition = glm::vec3(float(x)/heightMap[0].size() * baseDimensions.x - baseDimensions.x/2.f, 0.0, float(y)/heightMap.size() * baseDimensions.z - baseDimensions.z/2.f);
+        float pointRadius2 = std::pow(gridPosition.x - p1.x, 2) + std::pow(gridPosition.z - p1.z, 2);
+        float pointHeight = 0;
+        switch(type) {
+            case Flat:
+                pointHeight = p1.y;
+            break;
+            case Spherical:
+                pointHeight = p1.y + radius - sqrt(radius*radius - pointRadius2);
+            break;
+        }
+        glm::vec<2, int> diff = {p2Col - p1Col, p2Row - p1Row};
+        bresenham(x, y, x+diff.x, y+diff.y, [&](int x, int y, float t) {
+            if(x < 0 || x >= heightMap[0].size() || y < 0 || y >= heightMap.size())
+                return;
+            if(heightMap[y][x] > pointHeight)
+                heightMap[y][x] = pointHeight;
+        });
+    });
+
     return {};
 }
 
