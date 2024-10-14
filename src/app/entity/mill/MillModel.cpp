@@ -23,9 +23,11 @@ void MillModel::render(Shader& shader) {
     shank->render();
 
     if(type==Spherical) {
+        mut.lock();
         auto sphereModel = glm::identity<glm::mat4>();
         sphereModel = glm::translate(sphereModel, position + glm::vec3(0, radius, 0));
         sphereModel = glm::scale(sphereModel, glm::vec3(radius));
+        mut.unlock();
 
         shader.setUniform("model", sphereModel);
         shader.setUniform("material.albedo", glm::vec4(	70.f/255.f, 130.f/255.f, 180.f/255.f, 1.0f));

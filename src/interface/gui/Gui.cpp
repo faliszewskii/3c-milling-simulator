@@ -39,24 +39,40 @@ void Gui::render() {
     renderMainMenu();
     ImGui::Begin("3C Milling Simulator");
     ImGui::SeparatorText("Simulation");
-    ImGui::BeginDisabled(appContext.mill->getPath().empty());
-    if(ImGui::Button(appContext.running?"Stop":"Run")) {
-        appContext.running = !appContext.running;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Instant")) {
-        auto e = appContext.mill->instant(appContext.heightMap->heightMapData, appContext.baseDimensions);
-        if(!e) {
-            appContext.running = false;
-            appContext.errorMessages.push_back(e.error());
+    ImGui::BeginDisabled(appContext.mill->getPath().empty() || appContext.mill->pathFinished());
+    if(!appContext.mill->isThreadRunning()) {
+        if(ImGui::Button("Run")) {
+            appContext.mill->startMilling(appContext.heightMap->heightMapData, appContext.baseDimensions);
         }
-        appContext.heightMap->update();
+    } else {
+        if(ImGui::Button("Stop")) {
+            appContext.mill->signalStop();
+        }
     }
     ImGui::EndDisabled();
+    ImGui::BeginDisabled(appContext.mill->getPath().empty() || appContext.mill->pathFinished() || appContext.mill->isThreadRunning());
+    ImGui::SameLine();
+    if(ImGui::Button("Instant")) {
+        appContext.mill->startInstant(appContext.heightMap->heightMapData, appContext.baseDimensions);
+//        auto e = appContext.mill->instant(appContext.heightMap->heightMapData, appContext.baseDimensions);
+//        if(!e) {
+//            appContext.running = false;
+//            appContext.errorMessages.push_back(e.error());
+//        }
+//        appContext.heightMap->update();
+    }
+    ImGui::EndDisabled();
+    ImGui::BeginDisabled(appContext.mill->isThreadRunning());
     ImGui::SameLine();
     if(ImGui::Button("Reset Block##block")) {
         appContext.heightMap->resizeHeightMap(appContext.heightMap->heightMapSize, appContext.baseDimensions.y);
         appContext.running = false;
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Reset Mill##Mill")) {
+        appContext.running = false;
+        appContext.mill->setPosition(glm::vec3(0,  appContext.baseDimensions.y+10, 0));
+        appContext.mill->reset();
     }
     float velocity = appContext.mill->getVelocity();
     if(ImGui::DragFloat("Velocity (mm/s)", &velocity, 1, 1, 1000))
@@ -83,11 +99,6 @@ void Gui::render() {
     }
 
     ImGui::SeparatorText("Mill");
-    if(ImGui::Button("Reset Mill##Mill")) {
-        appContext.running = false;
-        appContext.mill->setPosition(glm::vec3(0,  appContext.baseDimensions.y+10, 0));
-        appContext.mill->reset();
-    }
     ImGui::Text("Type: ");
     ImGui::SameLine();
     if(ImGui::RadioButton("Flat", appContext.mill->getType() == Flat)) {
@@ -110,6 +121,7 @@ void Gui::render() {
         if(appContext.mill->getRadius() > 0.5f*appContext.mill->getHeight())
             appContext.mill->setRadius(0.5f*appContext.mill->getHeight());
     }
+    ImGui::EndDisabled();
 
     ImGui::SeparatorText("Visualization");
     ImGui::Checkbox("Draw Mill Path", &appContext.drawPath);

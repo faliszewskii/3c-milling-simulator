@@ -21,7 +21,7 @@ public:
     float height;
     float radius;
     glm::vec3 position;
-
+    std::mutex mut;
 
     MillModel(float height, float radius, glm::vec3 position);
 

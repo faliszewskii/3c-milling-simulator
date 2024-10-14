@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <expected>
+#include <thread>
 #include "../algorithm/Bresenham.h"
 
 Mill::Mill(float height, float radius, glm::vec3 position, float velocity, float minAngleDescend, float minHeight) {
@@ -18,18 +19,63 @@ Mill::Mill(float height, float radius, glm::vec3 position, float velocity, float
     this->minHeight = minHeight;
     currentPoint = 0;
     tMillPath = 0;
+    threadRunning = false;
+    threadFinished = false;
+    stopThreadSignal = false;
+    threadError = false;
+    errorMessage = "OK";
 
     millModel = std::make_unique<MillModel>(height, radius, position);
 }
 
-std::expected<void, std::string> Mill::instant(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions) {
-    for(int i = currentPoint; i < path.size()-1; i++) {
+void Mill::startInstant(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions) {
+    threadRunning = true;
+    threadFinished = false;
+    stopThreadSignal = false;
+    threadError = false;
+    std::thread threadObj(&Mill::instantThread, this, std::ref(heightMap), baseDimensions);
+    threadObj.detach();
+}
+
+void Mill::startMilling(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions) {
+    threadRunning = true;
+    threadFinished = false;
+    stopThreadSignal = false;
+    threadError = false;
+    std::thread threadObj(&Mill::millThread, this, std::ref(heightMap), baseDimensions);
+    threadObj.detach();
+}
+
+void Mill::instantThread(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions) {
+    for(int i = currentPoint; i < path.size()-1 && !stopThreadSignal; i++) {
         auto e = mill(heightMap,baseDimensions, path[currentPoint], path[currentPoint + 1]);
+        if(!e) {
+            errorMessage = e.error();
+            threadError = true;
+            break;
+        }
+        positionMutex.lock();
         setPosition(path[currentPoint + 1]);
-        if(!e) return e;
+        positionMutex.unlock();
         currentPoint++;
     }
-    return {};
+    threadFinished = true;
+    threadRunning = false;
+}
+
+void Mill::millThread(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions) {
+    float deltaTime = 10/1000.f;
+    while(!stopThreadSignal && currentPoint != path.size() - 1) {
+        auto e = advance(heightMap, baseDimensions, deltaTime);
+        if(!e) {
+            errorMessage = e.error();
+            threadError = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    threadFinished = true;
+    threadRunning = false;
 }
 
 std::expected<void, std::string> Mill::advance(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions, float deltaTime) {
@@ -105,7 +151,9 @@ std::expected<void, std::string> Mill::mill(std::vector<std::vector<float>> &hei
                         if(heightMap[row][col] - pointHeight > height) {
                             return std::unexpected("Milling with a non-cutting part");
                         }
+                        heightMapMutex.lock();
                         heightMap[row][col] = pointHeight;
+                        heightMapMutex.unlock();
                     }
                 }
             }
@@ -154,7 +202,9 @@ std::expected<void, std::string> Mill::mill(std::vector<std::vector<float>> &hei
                     errorMessage = "Milling with a non-cutting part";
                     return;
                 }
+                heightMapMutex.lock();
                 heightMap[y][x] = pointHeight;
+                heightMapMutex.unlock();
             }
         });
     });
@@ -190,7 +240,9 @@ void Mill::setMinDescendAngle(float newMinDescendAngle) {
 
 void Mill::setPosition(glm::vec3 newPosition) {
     position = newPosition;
+    millModel->mut.lock();
     millModel->position = newPosition;
+    millModel->mut.unlock();
 }
 
 void Mill::setPath(std::vector<glm::vec3> newPath) {
@@ -220,4 +272,29 @@ void Mill::render(Shader& shader) {
 void Mill::reset() {
     tMillPath = 0;
     currentPoint = 0;
+}
+
+bool Mill::isThreadRunning() const {
+    return threadRunning;
+}
+
+bool Mill::isThreadFinished() const {
+    return threadFinished;
+}
+
+void Mill::signalStop() {
+    stopThreadSignal = true;
+}
+
+bool Mill::pathFinished() {
+    return !path.empty() && currentPoint == path.size() - 1;
+}
+
+std::optional<std::string> Mill::checkError() {
+    return threadError ? std::optional(errorMessage) : std::nullopt;
+}
+
+void Mill::clearError() {
+    threadError = false;
+    errorMessage = "OK";
 }

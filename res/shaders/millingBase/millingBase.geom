@@ -1,7 +1,7 @@
 #version 450
 
 layout(points) in; // Expecting one point per instance
-layout(triangle_strip, max_vertices = 12) out;
+layout(triangle_strip, max_vertices = 6) out;
 
 uniform sampler2D uHeightMap;
 uniform vec2 uGridSize;    // n by m grid

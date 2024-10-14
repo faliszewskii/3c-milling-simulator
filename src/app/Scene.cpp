@@ -50,18 +50,27 @@ void Scene::update() {
     appContext.lightBulb->position = appContext.light->position;
     appContext.lightBulb->color = glm::vec4(appContext.light->color, 1);
 
-    float time = glfwGetTime();
-    float deltaTime = time - appContext.lastFrameTime;
-    if(appContext.running) {
-        auto e = appContext.mill->advance(appContext.heightMap->heightMapData, appContext.baseDimensions, deltaTime);
-        if(!e) {
-            appContext.running = false;
-            appContext.errorMessages.push_back(e.error());
-        }
-
+//    float time = glfwGetTime();
+//    float deltaTime = time - appContext.lastFrameTime;
+//    if(!appContext.mill->isThreadRunning() && appContext.running) {
+//        auto e = appContext.mill->advance(appContext.heightMap->heightMapData, appContext.baseDimensions, deltaTime);
+//        if(!e) {
+//            appContext.running = false;
+//            appContext.errorMessages.push_back(e.error());
+//        }
+//
+//        appContext.heightMap->update();
+//    }
+//    appContext.lastFrameTime = time;
+    if(appContext.mill->isThreadRunning() ) {
         appContext.heightMap->update();
     }
-    appContext.lastFrameTime = time;
+    if(appContext.mill->isThreadFinished()) {
+        auto e = appContext.mill->checkError();
+        if(e)
+            appContext.errorMessages.push_back(e.value());
+        appContext.mill->clearError();
+    }
 }
 
 void Scene::render() {
