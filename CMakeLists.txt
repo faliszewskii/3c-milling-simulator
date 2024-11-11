@@ -26,6 +26,11 @@ set(IMGUI_SRC
         ${IMGUI_DIR}/misc/cpp/imgui_stdlib.cpp
 )
 
+
+
+# add subdirectory with path to folder containing Scene-Serializer CMakeList.txt, this should include it in build process
+add_subdirectory(dep/Scene-Serializer/cpp/Serializer)
+
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/dep/inc)
 
@@ -33,6 +38,8 @@ include_directories(${CMAKE_SOURCE_DIR}/dep/inc)
 link_directories(${CMAKE_SOURCE_DIR}/dep/lib)
 
 set(APP_SRC
+        dep/glad/glad.c
+        dep/glad/glad_glfw.h
         src/interface/gui/GuiBase.cpp
         src/interface/gui/GuiBase.h
         src/app/AppContext.h
@@ -67,25 +74,36 @@ set(APP_SRC
         src/app/algorithm/Bresenham3D.h
         src/app/heightmap/HeightMap.cpp
         src/app/heightmap/HeightMap.h
+        src/app/model/serializer/Serializer.cpp
+        src/app/model/serializer/Serializer.h
+        src/app/entity/patchC0/PatchC0.h
+        src/app/entity/patchC2/PatchC2.h
+        src/app/entity/patchC2/PatchC2.h
+        src/app/intersection/SurfaceIntersection.h
+        src/app/intersection/ParametricSurface.h
+        src/app/path/PathGenerator.cpp
+        src/app/path/PathGenerator.h
+        src/interface/camera/TopDownCamera.h
 )
 
 # Add executables
 add_executable(Milling_Simulator
         # Dependencies
         ${IMGUI_SRC}
-        ${CMAKE_SOURCE_DIR}/src/glad.c
         # Application
         ${CMAKE_SOURCE_DIR}/src/main.cpp
         ${APP_SRC}
 )
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/dep/nativefiledialog-extended)
+add_subdirectory(dep/glfw)
 
-include_directories(dep/nativefiledialog-extended)
+include_directories(dep/nativefiledialog-extended dep/Scene-Serializer/cpp/Serializer/Serializer)
 
 # Link libraries
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")             # macOS
     target_link_libraries(Milling_Simulator
+            MGSerializer
             nfd
             ${CMAKE_SOURCE_DIR}/dep/lib/libglfw.3.4.dylib
             ${CMAKE_SOURCE_DIR}/dep/lib/libGLEW.2.2.0.dylib
@@ -96,15 +114,19 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")             # macOS
             "-framework CoreFoundation"
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")        # Windows
+    find_package(glm CONFIG REQUIRED)
     find_package(OpenGL REQUIRED)
     include_directories( ${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(Milling_Simulator
-            ${CMAKE_SOURCE_DIR}/dep/lib/glfw3.lib
-            ${CMAKE_SOURCE_DIR}/dep/lib/glew32.lib
+    target_link_libraries(Milling_Simulator PRIVATE
+            MGSerializer
+            glm::glm
+            nfd
+            glfw
             ${OPENGL_LIBRARIES}
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")          # Linux
     target_link_libraries(Milling_Simulator PRIVATE
+            MGSerializer
             -lglfw
             -lGLEW
             -lGL

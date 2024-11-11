@@ -4,3 +4,9 @@
 [submodule "dep/nativefiledialog-extended"]
 	path = dep/nativefiledialog-extended
 	url = git@github.com:btzy/nativefiledialog-extended.git
+[submodule "dep/Scene-Serializer"]
+	path = dep/Scene-Serializer
+	url = git@github.com:bjadczak/Scene-Serializer.git
+[submodule "dep/glfw"]
+	path = dep/glfw
+	url = git@github.com:glfw/glfw.git

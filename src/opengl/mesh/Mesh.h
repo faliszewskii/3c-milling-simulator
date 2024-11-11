@@ -58,6 +58,9 @@ public:
         glBindVertexArray(0);
     }
 
+    std::vector<TVertex> getVertices() { return vertices; };
+    std::optional<std::vector<unsigned int>> getIndices() const { return indices; };
+
 private:
     //  render data
     unsigned int VAO, VBO, EBO;

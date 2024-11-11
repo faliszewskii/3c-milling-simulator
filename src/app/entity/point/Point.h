@@ -21,6 +21,10 @@ public:
         mesh = std::make_unique<Mesh<EmptyVertex>>(Mesh<EmptyVertex>({EmptyVertex()}, {}, GL_POINTS));
     }
 
+    Point(glm::vec3 position): Point() {
+        this->position = position;
+    }
+
     void render(Shader &shader) {
         shader.setUniform("position", position);
         shader.setUniform("color", color);

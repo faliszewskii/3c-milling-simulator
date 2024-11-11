@@ -21,7 +21,14 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
             "../res/shaders/basic/position.vert", "../res/shaders/basic/white.frag"));
     appContext.millingBaseShader = std::make_unique<Shader>(Shader::createTraditionalShader(
             "../res/shaders/millingBase/millingBase.vert", "../res/shaders/millingBase/millingBase.geom", "../res/shaders/phong/phong.frag"));
-
+    appContext.patchC0Shader = std::make_unique<Shader>(Shader::createTraditionalShader(
+                "../res/shaders/patch/patch.vert", "../res/shaders/patch/patch.tesc", "../res/shaders/patch/patch.tese", "../res/shaders/patch/patch.frag"));
+    appContext.patchC2Shader = std::make_unique<Shader>(Shader::createTraditionalShader(
+                   "../res/shaders/patch/patch.vert", "../res/shaders/patch/patch.tesc", "../res/shaders/patch/patchC2.tese", "../res/shaders/patch/patch.frag"));
+    appContext.patchC0ShaderQuad = std::make_unique<Shader>(Shader::createTraditionalShader(
+                    "../res/shaders/quadPatch/patch.vert", "../res/shaders/quadPatch/patch.tesc", "../res/shaders/quadPatch/patch.tese", "../res/shaders/quadPatch/patch.frag"));
+    appContext.patchC2ShaderQuad = std::make_unique<Shader>(Shader::createTraditionalShader(
+                   "../res/shaders/quadPatch/patch.vert", "../res/shaders/quadPatch/patch.tesc", "../res/shaders/quadPatch/patchC2.tese", "../res/shaders/quadPatch/patch.frag"));
 
     appContext.quad = std::make_unique<Quad>();
     appContext.light = std::make_unique<PointLight>();
@@ -37,12 +44,16 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 
     appContext.baseDimensions = {150, 50, 150};
 
-    appContext.heightMap = std::make_unique<HeightMap>(glm::vec<2, int>(1024, 1024), appContext.baseDimensions.y);
+    appContext.heightMap = std::make_unique<HeightMap>(glm::vec<2, int>(256, 256), appContext.baseDimensions.y);
 
     appContext.lastFrameTime = 0;
     appContext.running = false;
 
     appContext.drawPath = true;
+
+    appContext.modelSerializer = std::make_unique<Serializer>();
+    appContext.surfaceIntersection = std::make_unique<SurfaceIntersection>();
+    appContext.pathGenerator = std::make_unique<PathGenerator>(appContext);
 }
 
 void Scene::update() {
@@ -50,22 +61,11 @@ void Scene::update() {
     appContext.lightBulb->position = appContext.light->position;
     appContext.lightBulb->color = glm::vec4(appContext.light->color, 1);
 
-//    float time = glfwGetTime();
-//    float deltaTime = time - appContext.lastFrameTime;
-//    if(!appContext.mill->isThreadRunning() && appContext.running) {
-//        auto e = appContext.mill->advance(appContext.heightMap->heightMapData, appContext.baseDimensions, deltaTime);
-//        if(!e) {
-//            appContext.running = false;
-//            appContext.errorMessages.push_back(e.error());
-//        }
-//
-//        appContext.heightMap->update();
-//    }
-//    appContext.lastFrameTime = time;
     if(appContext.mill->isThreadRunning() ) {
         appContext.heightMap->update();
     }
     if(appContext.mill->isThreadFinished()) {
+        appContext.heightMap->update();
         auto e = appContext.mill->checkError();
         if(e)
             appContext.errorMessages.push_back(e.value());
@@ -116,6 +116,44 @@ void Scene::render() {
     model = glm::rotate(model, float(std::numbers::pi/2.f), glm::vec3(1, 0, 0));
     appContext.phongShader->setUniform("model", model);
     appContext.quad->render();
+
+    glPointSize(4);
+    appContext.pointShader->use();
+    appContext.pointShader->setUniform("view", appContext.camera->getViewMatrix());
+    appContext.pointShader->setUniform("projection", appContext.camera->getProjectionMatrix());
+    for(auto &point : appContext.points) {
+        point.second.render(*appContext.pointShader);
+    }
+    for(auto &point : appContext.intersections) {
+        point.render(*appContext.pointShader);
+    }
+    glPointSize(1);
+
+    appContext.patchC0Shader->use();
+    appContext.patchC0Shader->setUniform("distance", 0.f);
+    appContext.patchC0Shader->setUniform("selected", false);
+    appContext.patchC0Shader->setUniform("color", glm::vec4(1));
+    appContext.patchC0Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
+    appContext.patchC0Shader->setUniform("view", appContext.camera->getViewMatrix());
+    appContext.patchC0Shader->setUniform("gridCountLength", 3);
+    appContext.patchC0Shader->setUniform("gridCountWidth", 3);
+
+    for(auto &patch : appContext.patchesC0) {
+        patch.get().render(*appContext.patchC0Shader);
+    }
+
+    appContext.patchC2Shader->use();
+    appContext.patchC2Shader->setUniform("distance", 0.f);
+    appContext.patchC2Shader->setUniform("selected", false);
+    appContext.patchC2Shader->setUniform("color", glm::vec4(1));
+    appContext.patchC2Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
+    appContext.patchC2Shader->setUniform("view", appContext.camera->getViewMatrix());
+    appContext.patchC2Shader->setUniform("gridCountLength", 3);
+    appContext.patchC2Shader->setUniform("gridCountWidth", 3);
+
+    for(auto &patch : appContext.patchesC2) {
+        patch.get().render(*appContext.patchC2Shader);
+    }
 
     appContext.frameBufferManager->unbind();
 }

@@ -20,7 +20,7 @@ public:
 
     void renderMainMenu();
 
-    void renderMenuItemLoadModel();
+    void renderMenuItemLoadPath();
 
     void setupPath(const std::string& outPath);
 };

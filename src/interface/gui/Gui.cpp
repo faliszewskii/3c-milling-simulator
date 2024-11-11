@@ -5,6 +5,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include "Gui.h"
+
+#include <functional>
+
 #include "imgui.h"
 #include "nfd.h"
 
@@ -132,8 +135,21 @@ void Gui::render() {
     ImGui::InputTextMultiline("##source", errors, totalLength(appContext.errorMessages), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
     delete(errors);
 
-    // renderLightUI(*appContext.light);
     ImGui::End();
+
+    ImGui::Begin("PathGeneration");
+    ImGui::BeginDisabled(appContext.patchesC0.empty() && appContext.patchesC2.empty());
+
+    if(ImGui::Button("Generate K16 path")) {
+        appContext.pathGenerator->generatePathK16();
+    }
+    if(ImGui::Button("Generate F10 path")) {
+        appContext.pathGenerator->generatePathF10();
+    }
+
+    ImGui::EndDisabled();
+    ImGui::End();
+
 }
 
 void Gui::renderLightUI(PointLight &light) {
@@ -141,40 +157,50 @@ void Gui::renderLightUI(PointLight &light) {
     ImGui::DragFloat3("Light Position", glm::value_ptr(light.position), 0.001f);
 }
 
+void openNfd(const std::function<void(const std::string &)> &func) {
+    NFD_Init();
+
+    nfdu8char_t *outPath;
+    nfdu8filteritem_t filters[] = { };
+    nfdopendialogu8args_t args = {0};
+    args.filterList = filters;
+    args.filterCount = 0;
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        std::string s(outPath);
+        func(s);
+        NFD_FreePath(outPath);
+    }
+    else if (result == NFD_CANCEL)
+    {
+        puts("User pressed cancel.");
+    }
+    else
+    {
+        printf("Error: %s\n", NFD_GetError());
+    }
+
+    NFD_Quit();
+}
+
 void Gui::renderMainMenu() {
     if(ImGui::BeginMainMenuBar()) {
         if(ImGui::BeginMenu("File")) {
-            if(ImGui::MenuItem("Import")) {
-                renderMenuItemLoadModel();
+            if(ImGui::MenuItem("Import Path")) {
+                openNfd([&](const std::string &path) {
+                    setupPath(path);
+                });
+            }
+            if(ImGui::MenuItem("Import Model")) {
+                openNfd([&](const std::string &path) {
+                    appContext.modelSerializer->importScene(appContext, path);
+                });
             }
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
-}
-
-
-void Gui::renderMenuItemLoadModel() {
-    NFD_Init();
-
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[0]{/*{*//*"G-code", "f..,k.."*//*}*/};
-    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 0, NULL);
-    if (result == NFD_OKAY) {
-        try {
-            setupPath(outPath);
-        } catch (std::exception &ex) {
-            // TODO Log error to log window.
-            std::cerr << ex.what() << std::endl;
-        }
-        NFD_FreePath(outPath);
-    } else if (result == NFD_CANCEL) {
-    } else {
-        printf("Error: %s\n", NFD_GetError());
-    }
-
-    NFD_Quit();
-//        }
 }
 
 void Gui::setupPath(const std::string& outPath) {

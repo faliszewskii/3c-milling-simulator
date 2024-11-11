@@ -50,8 +50,6 @@ void FrameBufferManager::create_buffers (unsigned int width, unsigned int height
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glPointSize(10);
-
     unbind();
 }
 

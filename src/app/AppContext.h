@@ -14,8 +14,13 @@
 #include "entity/point/Point.h"
 #include "gcode/GCodeParser.h"
 #include "../opengl/mesh/PositionVertex.h"
+#include "entity/patchC0/PatchC0.h"
+#include "entity/patchC2/PatchC2.h"
 #include "heightmap/HeightMap.h"
+#include "intersection/SurfaceIntersection.h"
 #include "mill/Mill.h"
+#include "model/serializer/Serializer.h"
+#include "path/PathGenerator.h"
 
 struct AppContext {
     AppContext() = default;
@@ -28,6 +33,10 @@ struct AppContext {
     std::unique_ptr<Shader> pointShader;
     std::unique_ptr<Shader> basicShader;
     std::unique_ptr<Shader> millingBaseShader;
+    std::unique_ptr<Shader> patchC0Shader;
+    std::unique_ptr<Shader> patchC2Shader;
+    std::unique_ptr<Shader> patchC0ShaderQuad;
+    std::unique_ptr<Shader> patchC2ShaderQuad;
 
     std::unique_ptr<PointLight> light;
     std::unique_ptr<Point> lightBulb;
@@ -50,6 +59,30 @@ struct AppContext {
     std::vector<std::string> errorMessages;
 
     bool drawPath;
+
+    // Model
+    std::unique_ptr<Serializer> modelSerializer;
+    std::unique_ptr<SurfaceIntersection> surfaceIntersection;
+    std::unique_ptr<PathGenerator> pathGenerator;
+
+    std::map<int, Point> points;
+    std::vector<Point> intersections;
+
+    std::unique_ptr<PatchC0> tail;
+    std::unique_ptr<PatchC0> topFin;
+
+    std::unique_ptr<PatchC2> bottomEye;
+    std::unique_ptr<PatchC2> bottomInner;
+    std::unique_ptr<PatchC2> topInner;
+    std::unique_ptr<PatchC2> topEye;
+    std::unique_ptr<PatchC2> body;
+    std::unique_ptr<PatchC2> butt;
+    std::unique_ptr<PatchC2> nose;
+    std::unique_ptr<PatchC2> wings;
+    std::unique_ptr<PatchC2> bottomFin;
+
+    std::vector<std::reference_wrapper<PatchC0>> patchesC0;
+    std::vector<std::reference_wrapper<PatchC2>> patchesC2;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H
