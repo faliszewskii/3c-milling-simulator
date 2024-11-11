@@ -54,6 +54,10 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.modelSerializer = std::make_unique<Serializer>();
     appContext.surfaceIntersection = std::make_unique<SurfaceIntersection>();
     appContext.pathGenerator = std::make_unique<PathGenerator>(appContext);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
 }
 
 void Scene::update() {

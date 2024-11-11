@@ -7,6 +7,7 @@
 #include "Gui.h"
 
 #include <functional>
+#include <numeric>
 
 #include "imgui.h"
 #include "nfd.h"
@@ -137,7 +138,7 @@ void Gui::render() {
 
     ImGui::End();
 
-    ImGui::Begin("PathGeneration");
+    ImGui::Begin("Path Generation");
     ImGui::BeginDisabled(appContext.patchesC0.empty() && appContext.patchesC2.empty());
 
     if(ImGui::Button("Generate K16 path")) {
@@ -146,8 +147,60 @@ void Gui::render() {
     if(ImGui::Button("Generate F10 path")) {
         appContext.pathGenerator->generatePathF10();
     }
-
     ImGui::EndDisabled();
+    ImGui::BeginDisabled(appContext.mill->getPath().empty());
+
+    glm::vec3 oldOffset = appContext.pathOffset;
+    if(ImGui::DragFloat3("Path offset", glm::value_ptr(appContext.pathOffset), 0.1)) {
+        auto diff = appContext.pathOffset - oldOffset;
+        auto path = appContext.mill->getPath();
+        std::ranges::transform(path, path.begin(), [&](auto& elem) { return elem + diff;});
+        appContext.mill->setPath(path);
+        std::vector<PositionVertex> vertices;
+        std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                       [](glm::vec3 v){ return PositionVertex(v);});
+        appContext.pathModel->update(std::move(vertices), std::nullopt);
+        appContext.running = false;
+    }
+
+    float oldScale = appContext.pathScale;
+    if(ImGui::DragFloat("Path scale", &appContext.pathScale, 0.005, 0.02, 2)) {
+        auto diff = appContext.pathScale / oldScale;
+        auto path = appContext.mill->getPath();
+        glm::vec3 avg = std::accumulate(path.begin(), path.end(), glm::vec3{0.0}) / static_cast<float>(path.size());
+        std::ranges::transform(path, path.begin(), [&](auto& elem) {
+            return glm::vec3{(elem.x-avg.x)*diff+avg.x, elem.y, (elem.z-avg.z)*diff+avg.z};
+        });
+        appContext.mill->setPath(path);
+        std::vector<PositionVertex> vertices;
+        std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                       [](glm::vec3 v){ return PositionVertex(v);});
+        appContext.pathModel->update(std::move(vertices), std::nullopt);
+        appContext.running = false;
+    }
+
+    float oldRotation = appContext.pathRotation;
+    if(ImGui::DragFloat("Path rotation", &appContext.pathRotation, 0.005, -std::numbers::pi, std::numbers::pi)) {
+        auto diff = appContext.pathRotation - oldRotation;
+        auto path = appContext.mill->getPath();
+        glm::vec3 avg = std::accumulate(path.begin(), path.end(), glm::vec3{0.0}) / static_cast<float>(path.size());
+        std::cout<<"Diff: "<<diff<< ", Sin: " << std::sin(diff) << ", Cos: " << std::cos(diff) << std::endl;
+        std::ranges::transform(path, path.begin(), [&](auto& elem) {
+            return glm::vec3{
+                ((elem.x-avg.x)*std::cos(diff) - (elem.z-avg.z)*std::sin(diff))+avg.x,
+                elem.y,
+                ((elem.x-avg.x)*std::sin(diff) + (elem.z-avg.z)*std::cos(diff))+avg.z
+            };
+        });
+        appContext.mill->setPath(path);
+        std::vector<PositionVertex> vertices;
+        std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                       [](glm::vec3 v){ return PositionVertex(v);});
+        appContext.pathModel->update(std::move(vertices), std::nullopt);
+        appContext.running = false;
+    }
+    ImGui::EndDisabled();
+
     ImGui::End();
 
 }
@@ -229,6 +282,10 @@ void Gui::setupPath(const std::string& outPath) {
     std::transform(points.begin(), points.end(), std::back_inserter(vertices),
                    [](glm::vec3 v){ return PositionVertex(v);});
     appContext.pathModel->update(std::move(vertices), std::nullopt);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
 
     appContext.running = false;
 }

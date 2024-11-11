@@ -83,6 +83,10 @@ struct AppContext {
 
     std::vector<std::reference_wrapper<PatchC0>> patchesC0;
     std::vector<std::reference_wrapper<PatchC2>> patchesC2;
+
+    glm::vec3 pathOffset;
+    float pathScale;
+    float pathRotation;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

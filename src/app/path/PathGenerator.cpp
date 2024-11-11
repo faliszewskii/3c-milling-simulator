@@ -95,6 +95,11 @@ void PathGenerator::generatePathK16() {
     appContext.mill->setRadius(radiusK16);
     appContext.mill->setType(Spherical);
 
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -256,6 +261,10 @@ void PathGenerator::generatePathF10() {
 
     appContext.mill->setRadius(radiusF10);
     appContext.mill->setType(Flat);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
