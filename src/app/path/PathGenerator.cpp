@@ -5,6 +5,7 @@
 #include "PathGenerator.h"
 
 #include <algorithm>
+#include <functional>
 
 #include "../AppContext.h"
 #include "../../interface/camera/TopDownCamera.h"
@@ -274,7 +275,6 @@ void PathGenerator::render() {
     glViewport(0, 0, resolutionX, resolutionY);
     glClearColor(1,1,1, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    // glDepthFunc(GL_ALWAYS);
 
     TopDownCamera camera;
 
@@ -287,9 +287,8 @@ void PathGenerator::render() {
     appContext.patchC0ShaderQuad->setUniform("gridCountLength", 20);
     appContext.patchC0ShaderQuad->setUniform("gridCountWidth", 20);
 
-    for(auto &patch : appContext.patchesC0) {
-        patch.get().render(*appContext.patchC0ShaderQuad);
-    }
+    appContext.tail->render(*appContext.patchC0ShaderQuad);
+//    appContext.topFin->render(*appContext.patchC0ShaderQuad);
 
     appContext.patchC2ShaderQuad->use();
     appContext.patchC2ShaderQuad->setUniform("distance", 0.f);
@@ -300,7 +299,87 @@ void PathGenerator::render() {
     appContext.patchC2ShaderQuad->setUniform("gridCountLength", 20);
     appContext.patchC2ShaderQuad->setUniform("gridCountWidth", 20);
 
-    for(auto &patch : appContext.patchesC2) {
-        patch.get().render(*appContext.patchC2ShaderQuad);
+    appContext.bottomEye->render(*appContext.patchC2ShaderQuad);
+    appContext.bottomInner->render(*appContext.patchC2ShaderQuad);
+    appContext.topInner->render(*appContext.patchC2ShaderQuad);
+    appContext.topEye->render(*appContext.patchC2ShaderQuad);
+    appContext.body->render(*appContext.patchC2ShaderQuad);
+    appContext.butt->render(*appContext.patchC2ShaderQuad);
+    appContext.nose->render(*appContext.patchC2ShaderQuad);
+    appContext.wings->render(*appContext.patchC2ShaderQuad);
+    appContext.bottomFin->render(*appContext.patchC2ShaderQuad);
+}
+
+void PathGenerator::generatePathAnalyticalF10() {
+    float radiusF10 = 5.0f;
+
+
+
+    std::vector<glm::vec3> path;
+    path.emplace_back(0, 66, 0);
+    path.emplace_back(-87, 66, -87);
+    path.emplace_back(-87, 15, -87);
+
+    std::vector<std::string> outlinePaths = {
+            "body_top",
+            "wings_top",
+            "wings_bottom",
+            "body_top",
+            "tail6",
+            "tail7",
+            "tail8",
+            "tail2",
+            "tail1",
+            "tail4",
+            "tail3",
+            "tail5",
+            "body_bottom",
+            "bottom_fin_bottom",
+            "bottom_fin_top",
+            "body_bottom",
+            "eye_bottom",
+            "nose_bottom",
+            "nose_top",
+            "eye_top",
+    };
+
+    float epsilon = 0.5;
+    bool skip = false;
+    int j = 0;
+    for (int i = 0; i < outlinePaths.size(); i++) {
+        if(!skip) j = 0;
+        skip = false;
+        for (; j < appContext.outlines[outlinePaths[i]].size(); j++) {
+            auto point = appContext.outlines[outlinePaths[i]][j];
+            if(i != outlinePaths.size()-1) {
+                for(int k = 0; k < appContext.outlines[outlinePaths[i+1]].size(); k++) {
+                    auto &o = appContext.outlines[outlinePaths[i+1]][k];
+                    if(glm::length(point - o) < epsilon) {
+                        skip = true;
+                        j = k;
+                        break;
+                    }
+                }
+            }
+            if (skip) break;
+            path.emplace_back(point);
+        }
     }
+
+    path.emplace_back(path.back().x, 66, path.back().z);
+    path.emplace_back(0, 66, 0);
+
+    appContext.mill->setPath(path);
+    std::vector<PositionVertex> vertices;
+    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+    appContext.running = false;
+
+    appContext.mill->setRadius(radiusF10);
+    appContext.mill->setType(Flat);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
 }

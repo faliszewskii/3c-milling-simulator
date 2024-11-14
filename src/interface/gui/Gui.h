@@ -23,6 +23,8 @@ public:
     void renderMenuItemLoadPath();
 
     void setupPath(const std::string& outPath);
+
+    void pathManipulationUI();
 };
 
 

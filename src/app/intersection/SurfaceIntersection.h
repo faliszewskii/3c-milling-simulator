@@ -46,7 +46,7 @@ public:
 
     struct IntersectionResult {
         std::vector<glm::vec3> intersectionPoints;
-        // std::vector<std::pair<IntersectableSurface, std::vector<glm::vec2>>> surfaces;
+         std::vector<std::vector<glm::vec2>> surfaces;
         bool wrapped;
     };
 
@@ -66,7 +66,6 @@ public:
                     float v = minV + divV/2.f + j * divV;
                     float repulsion = repulser.has_value()? std::pow( glm::distance(glm::vec2(u,v), repulser.value()), repulserExponent): 0;
                     float dist = glm::distance(surfaceA.evaluate(u, v), referencePoint) - repulsion;
-//                    std::cout <<"u: " << u << ", v: " << v << ". Dist: " << dist << std::endl;
                     if(dist < minDist) {
                         minDist = dist;
                         bestI = i;
@@ -149,7 +148,6 @@ public:
             // float currDist = glm::distance(surfaceA.evaluate(pointA.x - gradient.x * step, pointA.y - gradient.y * step), surfaceB.evaluate(pointB.x - gradient.z * step, pointB.y - gradient.w * step));
             float currDist = glm::distance(surfaceA.evaluate(newU, newV), surfaceB.evaluate(newS, newT));
             if(currDist > prevDist) {
-                std::cout<<"Smaller step"<<std::endl;
                 step /= 2;
                 prevDist = std::numeric_limits<float>::max();
                 continue;
@@ -161,8 +159,14 @@ public:
             pointB.x = newS;
             pointB.y = newT;
             step = gradientStartStep;
+//            intersectionPoints.push_back(surfaceA.evaluate(newU, newV));
+//            intersectionPoints.push_back(surfaceB.evaluate(newS, newT));
         }
-
+//        return IntersectionResult{
+//                intersectionPoints,
+//                 vec,
+//                false
+//        };
         if(prevDist > std::numeric_limits<float>::epsilon() * gradientPrecisionEpsilon)
             return std::unexpected<std::string>("Couldn't find an intersection close to the cursor with desired precision");
 
@@ -179,12 +183,12 @@ public:
          for(int k = 0; k < maxIntersectionPoints; k++) {
              if(wasCapped) {
                  if(!positiveDirection) {
-                     // std::vector<std::pair<IntersectableSurface, std::vector<glm::vec2>>> vec;
-                     // vec.push_back(std::make_pair(std::ref(surfaceA), intersectionUV1));
-                     // vec.push_back(std::make_pair(std::ref(surfaceB), intersectionUV2));
+                     std::vector<std::vector<glm::vec2>> vec;
+                     vec.push_back(intersectionUV1);
+                     vec.push_back(intersectionUV2);
                      return IntersectionResult{
                          intersectionPoints,
-                         // vec,
+                          vec,
                          false
                      };
                  }
@@ -196,7 +200,6 @@ public:
                  v = startV;
                  s = startS;
                  t = startT;
-                 std::cout<<"Try from the other side" << std::endl;
                  positiveDirection = false;
                  T = {};
              }
@@ -217,7 +220,6 @@ public:
              auto newT = glm::normalize(glm::cross(pN, qN));
              newT = positiveDirection ? newT : -newT;
              bool signChanged = !(T.x == 0 && T.y == 0 && T.z == 0) && glm::dot(T, newT) < intersectionTangentDotProduct ;
-             // std::cout << glm::dot(T, newT) << std::endl;
              T = newT;
              T *= signChanged? -1 : 1;
              float currDist;
@@ -239,12 +241,12 @@ public:
                          intersectionUV1.emplace_back(pointA.x, pointA.y);
                          intersectionPoints.push_back(surfaceA.evaluate(pointB.x, pointB.y));
                          intersectionUV2.emplace_back(pointB.x, pointB.y);
-                         // std::vector<std::pair<IntersectableSurface, std::vector<glm::vec2>>> vec1;
-                         // vec1.push_back(std::make_pair(std::ref(surfaceA), intersectionUV1));
-                         // vec1.push_back(std::make_pair(std::ref(surfaceB), intersectionUV2));
+                         std::vector<std::vector<glm::vec2>> vec1;
+                         vec1.push_back(intersectionUV1);
+                         vec1.push_back(intersectionUV2);
                          return IntersectionResult{
                              intersectionPoints,
-                             // vec1,
+                              vec1,
                              true
                          };
                      }
@@ -259,17 +261,16 @@ public:
                      currDist > prevDist) {
                      if(stepTries == smallerStepTriesLimit) {
                          //return std::unexpected<std::string>("Next intersection point Newton diverged");
-                         // std::vector<std::pair<IntersectableSurface, std::vector<glm::vec2>>> vec;
-                         // vec.push_back(std::make_pair(std::ref(surfaceA), intersectionUV1));
-                         // vec.push_back(std::make_pair(std::ref(surfaceB), intersectionUV2));
+                          std::vector<std::vector<glm::vec2>> vec;
+                          vec.push_back(intersectionUV1);
+                          vec.push_back(intersectionUV2);
                          return IntersectionResult{
                              intersectionPoints,
-                             // vec,
+                              vec,
                              false
                          };
                      }
                      stepTries++;
-                     std::cout<< "Smaller step" << std::endl;
                      step /= 2;
                      prevDist = std::numeric_limits<float>::max();
                      u = pointA.x;
@@ -331,12 +332,12 @@ public:
          }
 
          if(intersectionPoints.size() == maxIntersectionPoints) return std::unexpected<std::string>("Too many intersection points");
-        // std::vector<std::pair<IntersectableSurface, std::vector<glm::vec2>>> vec;
-        // vec.push_back(std::make_pair(std::ref(surfaceA), intersectionUV1));
-        // vec.push_back(std::make_pair(std::ref(surfaceB), intersectionUV2));
+         std::vector<std::vector<glm::vec2>> vec;
+         vec.push_back(intersectionUV1);
+         vec.push_back(intersectionUV2);
         return IntersectionResult{
             intersectionPoints,
-            // vec,
+             vec,
             true
         };
     }

@@ -2,6 +2,8 @@
 // Created by faliszewskii on 16.06.24.
 //
 
+#include <ranges>
+#include <algorithm>
 #include "Scene.h"
 #include "../interface/camera/CameraAnchor.h"
 #include "heightmap/HeightMap.h"
@@ -58,6 +60,35 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.pathOffset = {};
     appContext.pathScale = 1;
     appContext.pathRotation = 0;
+
+    // TODO DEBUG
+    appContext.modelSerializer->importModel(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/fish_final3.json");
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/body_outline.json",
+                                             {"body_bottom", "body_top"});
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/bottom_fin_outline.json",
+                                             {"bottom_fin_top", "bottom_fin_bottom"});
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/eye_outline.json",
+                                             {"eye_top", "eye_bottom"});
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/nose_outline.json",
+                                             {"nose_top", "nose_bottom"});
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/tail_outline.json",
+                                             {"tail1", "tail2", "tail3", "tail4", "tail5", "tail6", "tail7", "tail8"});
+    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/wings_outline.json",
+                                             {"wings"});
+    appContext.baseDimensions.y = 10;
+
+//    std::reverse(appContext.outlines["wings"].begin(), appContext.outlines["wings"].end());
+    std::reverse(appContext.outlines["tail5"].begin(), appContext.outlines["tail5"].end());
+    std::reverse(appContext.outlines["tail6"].begin(), appContext.outlines["tail6"].end());
+    std::reverse(appContext.outlines["tail3"].begin(), appContext.outlines["tail3"].end());
+    std::reverse(appContext.outlines["tail4"].begin(), appContext.outlines["tail4"].end());
+    std::reverse(appContext.outlines["tail7"].begin(), appContext.outlines["tail7"].end());
+    std::reverse(appContext.outlines["tail8"].begin(), appContext.outlines["tail8"].end());
+
+    auto &v = appContext.outlines["wings"];
+    appContext.outlines["wings_top"] = std::vector<glm::vec3>(v.begin(), v.begin() + v.size() / 2);
+    appContext.outlines["wings_bottom"] = std::vector<glm::vec3>(v.begin() + v.size() / 2, v.end());
+    // TODO DEBUG
 }
 
 void Scene::update() {
@@ -128,13 +159,15 @@ void Scene::render() {
     for(auto &point : appContext.points) {
         point.second.render(*appContext.pointShader);
     }
-    for(auto &point : appContext.intersections) {
-        point.render(*appContext.pointShader);
+    for(auto &intersection : std::views::values(appContext.intersections)) {
+        for(auto &point : intersection) {
+            point.render(*appContext.pointShader);
+        }
     }
     glPointSize(1);
 
     appContext.patchC0Shader->use();
-    appContext.patchC0Shader->setUniform("distance", 0.f);
+    appContext.patchC0Shader->setUniform("distance", 5.f);
     appContext.patchC0Shader->setUniform("selected", false);
     appContext.patchC0Shader->setUniform("color", glm::vec4(1));
     appContext.patchC0Shader->setUniform("projection", appContext.camera->getProjectionMatrix());

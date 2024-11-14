@@ -21,10 +21,10 @@ public:
     PathGenerator(AppContext &appContext);
 
     void generatePathK16();
+    void generatePathF10();
+    void generatePathAnalyticalF10();
 
     float getMaxHeight(float x, float y, float radius, float radiusMargin, int dirX);
-
-    void generatePathF10();
 
     void render();
 };

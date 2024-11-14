@@ -147,7 +147,18 @@ void Gui::render() {
     if(ImGui::Button("Generate F10 path")) {
         appContext.pathGenerator->generatePathF10();
     }
+    if(ImGui::Button("Generate Analytical F10 path")) {
+        appContext.pathGenerator->generatePathAnalyticalF10();
+    }
     ImGui::EndDisabled();
+
+    pathManipulationUI();
+
+    ImGui::End();
+
+}
+
+void Gui::pathManipulationUI() {
     ImGui::BeginDisabled(appContext.mill->getPath().empty());
 
     glm::vec3 oldOffset = appContext.pathOffset;
@@ -200,9 +211,6 @@ void Gui::render() {
         appContext.running = false;
     }
     ImGui::EndDisabled();
-
-    ImGui::End();
-
 }
 
 void Gui::renderLightUI(PointLight &light) {
@@ -247,7 +255,12 @@ void Gui::renderMainMenu() {
             }
             if(ImGui::MenuItem("Import Model")) {
                 openNfd([&](const std::string &path) {
-                    appContext.modelSerializer->importScene(appContext, path);
+                    appContext.modelSerializer->importModel(appContext, path);
+                });
+            }
+            if(ImGui::MenuItem("Import Helper")) {
+                openNfd([&](const std::string &path) {
+                    appContext.modelSerializer->importHelper(appContext, path, {});
                 });
             }
             ImGui::EndMenu();

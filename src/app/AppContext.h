@@ -66,10 +66,11 @@ struct AppContext {
     std::unique_ptr<PathGenerator> pathGenerator;
 
     std::map<int, Point> points;
-    std::vector<Point> intersections;
+    std::map<std::string, std::vector<Point>> intersections;
 
     std::unique_ptr<PatchC0> tail;
     std::unique_ptr<PatchC0> topFin;
+    std::unique_ptr<PatchC0> planeXZ;
 
     std::unique_ptr<PatchC2> bottomEye;
     std::unique_ptr<PatchC2> bottomInner;
@@ -87,6 +88,9 @@ struct AppContext {
     glm::vec3 pathOffset;
     float pathScale;
     float pathRotation;
+    glm::mat4 modelTransform;
+
+    std::map<std::string, std::vector<glm::vec3>> outlines;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H
