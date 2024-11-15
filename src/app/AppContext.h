@@ -80,16 +80,19 @@ struct AppContext {
     std::unique_ptr<PatchC2> butt;
     std::unique_ptr<PatchC2> nose;
     std::unique_ptr<PatchC2> wings;
+
+    bool drawMeshes;
+    bool drawMill;
+
     std::unique_ptr<PatchC2> bottomFin;
-
     std::vector<std::reference_wrapper<PatchC0>> patchesC0;
-    std::vector<std::reference_wrapper<PatchC2>> patchesC2;
 
+    std::vector<std::reference_wrapper<PatchC2>> patchesC2;
     glm::vec3 pathOffset;
     float pathScale;
     float pathRotation;
-    glm::mat4 modelTransform;
 
+    glm::mat4 modelTransform;
     std::map<std::string, std::vector<glm::vec3>> outlines;
 };
 

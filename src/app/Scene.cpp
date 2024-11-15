@@ -52,6 +52,8 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.running = false;
 
     appContext.drawPath = true;
+    appContext.drawMeshes = true;
+    appContext.drawMill = true;
 
     appContext.modelSerializer = std::make_unique<Serializer>();
     appContext.surfaceIntersection = std::make_unique<SurfaceIntersection>();
@@ -143,7 +145,7 @@ void Scene::render() {
     appContext.phongShader->setUniform("material.albedo", glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
     appContext.phongShader->setUniform("material.shininess", 256.f);
     appContext.light->setupPointLight(*appContext.phongShader);
-    appContext.mill->render(*appContext.phongShader);
+    if(appContext.drawMill) appContext.mill->render(*appContext.phongShader);
 
     appContext.phongShader->setUniform("material.albedo", glm::vec4(0.5f, 0.6f, 0.7f, 1.0f));
     glm::mat4 model = glm::identity<glm::mat4>();
@@ -152,44 +154,47 @@ void Scene::render() {
     appContext.phongShader->setUniform("model", model);
     appContext.quad->render();
 
-    glPointSize(4);
-    appContext.pointShader->use();
-    appContext.pointShader->setUniform("view", appContext.camera->getViewMatrix());
-    appContext.pointShader->setUniform("projection", appContext.camera->getProjectionMatrix());
-    for(auto &point : appContext.points) {
-        point.second.render(*appContext.pointShader);
-    }
-    for(auto &intersection : std::views::values(appContext.intersections)) {
-        for(auto &point : intersection) {
-            point.render(*appContext.pointShader);
+    if(appContext.drawMeshes){
+        glPointSize(4);
+        appContext.pointShader->use();
+        appContext.pointShader->setUniform("view", appContext.camera->getViewMatrix());
+        appContext.pointShader->setUniform("projection", appContext.camera->getProjectionMatrix());
+        for (auto &point: appContext.points) {
+            point.second.render(*appContext.pointShader);
         }
-    }
-    glPointSize(1);
+        for (auto &intersection: std::views::values(appContext.intersections)) {
+            for (auto &point: intersection) {
+                point.render(*appContext.pointShader);
+            }
+        }
+        glPointSize(1);
 
-    appContext.patchC0Shader->use();
-    appContext.patchC0Shader->setUniform("distance", 5.f);
-    appContext.patchC0Shader->setUniform("selected", false);
-    appContext.patchC0Shader->setUniform("color", glm::vec4(1));
-    appContext.patchC0Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
-    appContext.patchC0Shader->setUniform("view", appContext.camera->getViewMatrix());
-    appContext.patchC0Shader->setUniform("gridCountLength", 3);
-    appContext.patchC0Shader->setUniform("gridCountWidth", 3);
+        appContext.patchC0Shader->use();
+        appContext.patchC0Shader->setUniform("distance", 0.f);
+        appContext.patchC0Shader->setUniform("selected", false);
+        appContext.patchC0Shader->setUniform("color", glm::vec4(1));
+        appContext.patchC0Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
+        appContext.patchC0Shader->setUniform("view", appContext.camera->getViewMatrix());
+        appContext.patchC0Shader->setUniform("gridCountLength", 3);
+        appContext.patchC0Shader->setUniform("gridCountWidth", 3);
 
-    for(auto &patch : appContext.patchesC0) {
-        patch.get().render(*appContext.patchC0Shader);
-    }
+        for(auto &patch : appContext.patchesC0) {
+            patch.get().render(*appContext.patchC0Shader);
+        }
 
-    appContext.patchC2Shader->use();
-    appContext.patchC2Shader->setUniform("distance", 0.f);
-    appContext.patchC2Shader->setUniform("selected", false);
-    appContext.patchC2Shader->setUniform("color", glm::vec4(1));
-    appContext.patchC2Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
-    appContext.patchC2Shader->setUniform("view", appContext.camera->getViewMatrix());
-    appContext.patchC2Shader->setUniform("gridCountLength", 3);
-    appContext.patchC2Shader->setUniform("gridCountWidth", 3);
+        appContext.patchC2Shader->use();
+        appContext.patchC2Shader->setUniform("distance", 0.f);
+        appContext.patchC2Shader->setUniform("selected", false);
+        appContext.patchC2Shader->setUniform("color", glm::vec4(1));
+        appContext.patchC2Shader->setUniform("projection", appContext.camera->getProjectionMatrix());
+        appContext.patchC2Shader->setUniform("view", appContext.camera->getViewMatrix());
+        appContext.patchC2Shader->setUniform("gridCountLength", 3);
+        appContext.patchC2Shader->setUniform("gridCountWidth", 3);
 
-    for(auto &patch : appContext.patchesC2) {
-        patch.get().render(*appContext.patchC2Shader);
+        for(auto &patch : appContext.patchesC2) {
+            patch.get().render(*appContext.patchC2Shader);
+        }
+
     }
 
     appContext.frameBufferManager->unbind();

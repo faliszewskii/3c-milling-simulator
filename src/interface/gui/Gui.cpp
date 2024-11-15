@@ -129,6 +129,8 @@ void Gui::render() {
 
     ImGui::SeparatorText("Visualization");
     ImGui::Checkbox("Draw Mill Path", &appContext.drawPath);
+    ImGui::Checkbox("Draw Meshes", &appContext.drawMeshes);
+    ImGui::Checkbox("Draw Mill", &appContext.drawMill);
 
     ImGui::SeparatorText("Error Messages");
     char *errors = vectorToCharPointer(appContext.errorMessages);
