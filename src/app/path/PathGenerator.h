@@ -23,6 +23,7 @@ public:
     void generatePathK16();
     void generatePathF10();
     void generatePathAnalyticalF10();
+    void generatePathAnalyticalK08Eye();
 
     float getMaxHeight(float x, float y, float radius, float radiusMargin, int dirX);
 

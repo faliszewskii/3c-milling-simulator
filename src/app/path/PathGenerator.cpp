@@ -343,6 +343,7 @@ void PathGenerator::generatePathAnalyticalF10() {
             "eye_top",
     };
 
+    int everyNth = 0;
     float epsilon = 0.5;
     bool skip = false;
     int j = 0;
@@ -362,7 +363,8 @@ void PathGenerator::generatePathAnalyticalF10() {
                 }
             }
             if (skip) break;
-            path.emplace_back(point);
+            if(everyNth++ % appContext.everyNthPathPoint == 0)
+                path.emplace_back(point);
         }
     }
 
@@ -378,6 +380,58 @@ void PathGenerator::generatePathAnalyticalF10() {
 
     appContext.mill->setRadius(radiusF10);
     appContext.mill->setType(Flat);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
+}
+
+void PathGenerator::generatePathAnalyticalK08Eye() {
+    float radiusK08 = 4;
+
+    std::vector<glm::vec3> path;
+    path.emplace_back(0, 66, 0);
+
+    auto &path1 = appContext.outlines["inside_bottom"];
+    auto &path2 = appContext.outlines["inside_top"];
+
+    path.emplace_back(path1[0].x, 66, path1[0].z);
+
+    int everyNth = 0;
+    float firstDepth = 45;
+    float step = 10;
+    for(int k = 0; k < 3; k++) {
+        float halfStep = step / 2;
+        for(int i = 0; i < path1.size(); i++) {
+            float delta = halfStep / (path1.size() - 1);
+            float depth = firstDepth - k * step - delta * i;
+            if(i == 0 || i == path1.size() || everyNth++ % appContext.everyNthPathPoint == 0)
+                path.emplace_back(path1[i].x, depth, path1[i].z);
+        }
+        for(int i = 0; i < path2.size(); i++) {
+            float delta = halfStep / (path2.size() - 1);
+            float depth = firstDepth - halfStep - k * step - delta * i;
+            if(i == 0 || i == path2.size() || everyNth++ % appContext.everyNthPathPoint == 0)
+                path.emplace_back(path2[i].x, depth, path2[i].z);
+
+        }
+    }
+
+    std::copy(appContext.outlines["inside_bottom"].begin(), appContext.outlines["inside_bottom"].end(), std::back_inserter(path));
+    std::copy(appContext.outlines["inside_top"].begin(), appContext.outlines["inside_top"].end(), std::back_inserter(path));
+
+    path.emplace_back(path.back().x, 66, path.back().z);
+    path.emplace_back(0, 66, 0);
+
+    appContext.mill->setPath(path);
+    std::vector<PositionVertex> vertices;
+    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+    appContext.running = false;
+
+    appContext.mill->setRadius(radiusK08);
+    appContext.mill->setType(Spherical);
 
     appContext.pathOffset = {};
     appContext.pathScale = 1;

@@ -2,8 +2,13 @@
 // Created by faliszewskii on 06.05.24.
 //
 
+// #include "../../glew_glfw.h"
 #include <vector>
 #include "Texture.h"
+
+#include "../../../dep/glad/glad_glfw.h"
+
+
 #include "../shader/Shader.h"
 
 Texture::Texture(int x, int y, int nrChannels, int internalFormat, int format, int type, int target, void* data) {

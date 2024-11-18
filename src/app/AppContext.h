@@ -16,6 +16,7 @@
 #include "../opengl/mesh/PositionVertex.h"
 #include "entity/patchC0/PatchC0.h"
 #include "entity/patchC2/PatchC2.h"
+#include "gcode/GCodeExporter.h"
 #include "heightmap/HeightMap.h"
 #include "intersection/SurfaceIntersection.h"
 #include "mill/Mill.h"
@@ -43,6 +44,7 @@ struct AppContext {
     std::unique_ptr<Quad> quad;
 
     std::unique_ptr<GCodeParser> gCodeParser;
+    std::unique_ptr<GCodeExporter> gCodeExporter;
 
     std::unique_ptr<Mill> mill;
 
@@ -94,6 +96,8 @@ struct AppContext {
 
     glm::mat4 modelTransform;
     std::map<std::string, std::vector<glm::vec3>> outlines;
+
+    int everyNthPathPoint;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

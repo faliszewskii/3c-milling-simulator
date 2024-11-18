@@ -5,7 +5,8 @@
 #ifndef PUMAROBOT_SHADER_H
 #define PUMAROBOT_SHADER_H
 
-#include "../../glew_glfw.h"
+// #include "../../glew_glfw.h"
+#include "../../../dep/glad/glad_glfw.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

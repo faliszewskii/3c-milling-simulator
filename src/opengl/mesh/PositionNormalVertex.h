@@ -5,7 +5,7 @@
 #ifndef PUMAROBOT_POSITIONNORMALVERTEX_H
 #define PUMAROBOT_POSITIONNORMALVERTEX_H
 
-#include "../../glew_glfw.h"
+//#include "../../glew_glfw.h"
 #include <vector>
 #include "glm/vec3.hpp"
 

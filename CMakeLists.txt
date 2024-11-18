@@ -84,6 +84,8 @@ set(APP_SRC
         src/app/path/PathGenerator.cpp
         src/app/path/PathGenerator.h
         src/interface/camera/TopDownCamera.h
+        src/app/gcode/GCodeExporter.cpp
+        src/app/gcode/GCodeExporter.h
 )
 
 # Add executables

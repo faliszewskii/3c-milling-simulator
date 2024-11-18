@@ -40,6 +40,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.mill = std::make_unique<Mill>(40, 8, glm::vec3(0, 60, 0), 300, 0.999, 10);
 
     appContext.gCodeParser = std::make_unique<GCodeParser>();
+    appContext.gCodeExporter = std::make_unique<GCodeExporter>();
 
     appContext.pathModel = std::make_unique<Mesh<PositionVertex>>(std::vector<PositionVertex>(), std::nullopt, GL_LINE_STRIP);
     appContext.base = std::make_unique<Mesh<EmptyVertex>>(Mesh<EmptyVertex>({EmptyVertex{}}, std::nullopt, GL_POINTS));
@@ -63,20 +64,24 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.pathScale = 1;
     appContext.pathRotation = 0;
 
+    appContext.everyNthPathPoint = 1;
+
     // TODO DEBUG
-    appContext.modelSerializer->importModel(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/fish_final3.json");
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/body_outline.json",
+    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final4.json");
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_outline.json",
                                              {"body_bottom", "body_top"});
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/bottom_fin_outline.json",
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bottom_fin_outline.json",
                                              {"bottom_fin_top", "bottom_fin_bottom"});
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/eye_outline.json",
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/eye_outline.json",
                                              {"eye_top", "eye_bottom"});
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/nose_outline.json",
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/nose_outline.json",
                                              {"nose_top", "nose_bottom"});
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/tail_outline.json",
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/tail_outline.json",
                                              {"tail1", "tail2", "tail3", "tail4", "tail5", "tail6", "tail7", "tail8"});
-    appContext.modelSerializer->importHelper(appContext, "/home/faliszewskii/Repositories/3c-milling-simulator/res/models/outlines/wings_outline.json",
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/wings_outline.json",
                                              {"wings"});
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/inside_outline.json",
+                                             {"inside_top", "inside_bottom"});
     appContext.baseDimensions.y = 10;
 
 //    std::reverse(appContext.outlines["wings"].begin(), appContext.outlines["wings"].end());

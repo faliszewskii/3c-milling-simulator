@@ -189,11 +189,7 @@ std::expected<void, std::string> Mill::mill(std::vector<std::vector<float>> &hei
                 break;
             }
             if(heightMap[y][x] > pointHeight) {
-                if(descendAngle > maxDescendAngle && (type == Flat /*|| (pixelMiddle.x == x && pixelMiddle.y == y)*/)) {
-                    std::cout<<descendAngle<<std::endl;
-                    std::cout<<p1.y<<std::endl;
-                    std::cout<<p2.y<<std::endl;
-
+                if(descendAngle > maxDescendAngle && type == Flat) {
                     errorMessage = "Mill path too steep";
                     return;
                 }

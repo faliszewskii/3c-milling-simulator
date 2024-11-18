@@ -37,6 +37,60 @@ char* vectorToCharPointer(const std::vector<std::string>& strVec) {
 
     return result;
 }
+void openNfd(const std::function<void(const std::string &)> &func) {
+    NFD_Init();
+
+    nfdu8char_t *outPath;
+    nfdu8filteritem_t filters[] = { };
+    nfdopendialogu8args_t args = {0};
+    args.filterList = filters;
+    args.filterCount = 0;
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        std::string s(outPath);
+        func(s);
+        NFD_FreePath(outPath);
+    }
+    else if (result == NFD_CANCEL)
+    {
+        puts("User pressed cancel.");
+    }
+    else
+    {
+        printf("Error: %s\n", NFD_GetError());
+    }
+
+    NFD_Quit();
+}
+
+void saveNfd(const std::function<void(const std::string &)> &func) {
+    NFD_Init();
+
+    nfdu8char_t *outPath;
+    nfdu8filteritem_t filters[0] = { };
+    nfdsavedialogu8args_t args = {0};
+    args.filterList = filters;
+    args.filterCount = 0;
+    args.defaultName = "path.___";
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        std::string s(outPath);
+        func(s);
+        NFD_FreePath(outPath);
+    }
+    else if (result == NFD_CANCEL)
+    {
+        puts("User pressed cancel.");
+    }
+    else
+    {
+        printf("Error: %s\n", NFD_GetError());
+    }
+
+    NFD_Quit();
+}
 
 void Gui::render() {
     ImGui::ShowDemoWindow();
@@ -143,6 +197,7 @@ void Gui::render() {
     ImGui::Begin("Path Generation");
     ImGui::BeginDisabled(appContext.patchesC0.empty() && appContext.patchesC2.empty());
 
+    ImGui::DragInt("Every nth path point", &appContext.everyNthPathPoint, 1, 1, 100);
     if(ImGui::Button("Generate K16 path")) {
         appContext.pathGenerator->generatePathK16();
     }
@@ -151,6 +206,17 @@ void Gui::render() {
     }
     if(ImGui::Button("Generate Analytical F10 path")) {
         appContext.pathGenerator->generatePathAnalyticalF10();
+    }
+    if(ImGui::Button("Generate Analytical K08 path eye")) {
+        appContext.pathGenerator->generatePathAnalyticalK08Eye();
+    }
+    ImGui::EndDisabled();
+    ImGui::BeginDisabled(appContext.mill->getPath().empty());
+    if(ImGui::Button("Save current path")) {
+        saveNfd([&](const std::string &path) {
+            GCodeExporter::parse(path, appContext.mill->getPath());
+        });
+
     }
     ImGui::EndDisabled();
 
@@ -162,9 +228,26 @@ void Gui::render() {
 
 void Gui::pathManipulationUI() {
     ImGui::BeginDisabled(appContext.mill->getPath().empty());
+    bool changed = false;
+
+    if(ImGui::Button("Add mill rest position")) {
+        auto path = appContext.mill->getPath();
+        path.insert(path.begin(), {path.begin()->x, 66, path.begin()->z});
+        path.insert(path.begin(), {0, 66, 0});
+        path.emplace_back(path.rbegin()->x, 66, path.rbegin()->z);
+        path.emplace_back(0, 66, 0);
+        appContext.mill->setPath(path);
+        std::vector<PositionVertex> vertices;
+        std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                       [](glm::vec3 v){ return PositionVertex(v);});
+        appContext.pathModel->update(std::move(vertices), std::nullopt);
+        appContext.running = false;
+    }
+
 
     glm::vec3 oldOffset = appContext.pathOffset;
     if(ImGui::DragFloat3("Path offset", glm::value_ptr(appContext.pathOffset), 0.1)) {
+        changed = true;
         auto diff = appContext.pathOffset - oldOffset;
         auto path = appContext.mill->getPath();
         std::ranges::transform(path, path.begin(), [&](auto& elem) { return elem + diff;});
@@ -178,6 +261,7 @@ void Gui::pathManipulationUI() {
 
     float oldScale = appContext.pathScale;
     if(ImGui::DragFloat("Path scale", &appContext.pathScale, 0.005, 0.02, 2)) {
+        changed = true;
         auto diff = appContext.pathScale / oldScale;
         auto path = appContext.mill->getPath();
         glm::vec3 avg = std::accumulate(path.begin(), path.end(), glm::vec3{0.0}) / static_cast<float>(path.size());
@@ -194,6 +278,7 @@ void Gui::pathManipulationUI() {
 
     float oldRotation = appContext.pathRotation;
     if(ImGui::DragFloat("Path rotation", &appContext.pathRotation, 0.005, -std::numbers::pi, std::numbers::pi)) {
+        changed = true;
         auto diff = appContext.pathRotation - oldRotation;
         auto path = appContext.mill->getPath();
         glm::vec3 avg = std::accumulate(path.begin(), path.end(), glm::vec3{0.0}) / static_cast<float>(path.size());
@@ -212,39 +297,29 @@ void Gui::pathManipulationUI() {
         appContext.pathModel->update(std::move(vertices), std::nullopt);
         appContext.running = false;
     }
+
+    if(changed) {
+        auto path = appContext.mill->getPath();
+        path.erase(path.begin(), path.begin() +2);
+        path.erase(path.end() - 2, path.end());
+        path.insert(path.begin(), {path.begin()->x, 66, path.begin()->z});
+        path.insert(path.begin(), {0, 66, 0});
+        path.emplace_back(path.rbegin()->x, 66, path.rbegin()->z);
+        path.emplace_back(0, 66, 0);
+        appContext.mill->setPath(path);
+        std::vector<PositionVertex> vertices;
+        std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                       [](glm::vec3 v){ return PositionVertex(v);});
+        appContext.pathModel->update(std::move(vertices), std::nullopt);
+        appContext.running = false;
+    }
+
     ImGui::EndDisabled();
 }
 
 void Gui::renderLightUI(PointLight &light) {
     ImGui::ColorPicker3("Light Color", glm::value_ptr(light.color));
     ImGui::DragFloat3("Light Position", glm::value_ptr(light.position), 0.001f);
-}
-
-void openNfd(const std::function<void(const std::string &)> &func) {
-    NFD_Init();
-
-    nfdu8char_t *outPath;
-    nfdu8filteritem_t filters[] = { };
-    nfdopendialogu8args_t args = {0};
-    args.filterList = filters;
-    args.filterCount = 0;
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        std::string s(outPath);
-        func(s);
-        NFD_FreePath(outPath);
-    }
-    else if (result == NFD_CANCEL)
-    {
-        puts("User pressed cancel.");
-    }
-    else
-    {
-        printf("Error: %s\n", NFD_GetError());
-    }
-
-    NFD_Quit();
 }
 
 void Gui::renderMainMenu() {
