@@ -210,6 +210,9 @@ void Gui::render() {
     if(ImGui::Button("Generate Analytical K08 path eye")) {
         appContext.pathGenerator->generatePathAnalyticalK08Eye();
     }
+    if(ImGui::Button("Generate Analytical K08 path")) {
+        appContext.pathGenerator->generatePathAnalyticalK08();
+    }
     ImGui::EndDisabled();
     ImGui::BeginDisabled(appContext.mill->getPath().empty());
     if(ImGui::Button("Save current path")) {

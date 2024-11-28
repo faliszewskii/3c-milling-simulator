@@ -67,7 +67,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.everyNthPathPoint = 1;
 
     // TODO DEBUG
-    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final4.json");
+    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final7.json");
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_outline.json",
                                              {"body_bottom", "body_top"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bottom_fin_outline.json",
@@ -95,11 +95,16 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     auto &v = appContext.outlines["wings"];
     appContext.outlines["wings_top"] = std::vector<glm::vec3>(v.begin(), v.begin() + v.size() / 2);
     appContext.outlines["wings_bottom"] = std::vector<glm::vec3>(v.begin() + v.size() / 2, v.end());
-    // TODO DEBUG
+
+    appContext.masks["wings"] = std::make_unique<IntersectionMask>("../res/masks/wing9.png");
+    appContext.masks["body"] = std::make_unique<IntersectionMask>("../res/masks/body5.png");
+    appContext.masks["bottom_eye"] = std::make_unique<IntersectionMask>("../res/masks/bottom_eye1.png");
+    appContext.masks["top_eye"] = std::make_unique<IntersectionMask>("../res/masks/top_eye1.png");
+    appContext.masks["nose"] = std::make_unique<IntersectionMask>("../res/masks/nose.png");
+    appContext.masks["bottom_fin"] = std::make_unique<IntersectionMask>("../res/masks/bottom_fin1.png");
 }
 
 void Scene::update() {
-    // TODO --- Here goes scene data update.
     appContext.lightBulb->position = appContext.light->position;
     appContext.lightBulb->color = glm::vec4(appContext.light->color, 1);
 

@@ -86,6 +86,9 @@ set(APP_SRC
         src/interface/camera/TopDownCamera.h
         src/app/gcode/GCodeExporter.cpp
         src/app/gcode/GCodeExporter.h
+        src/app/intersectionMask/IntersectionMask.cpp
+        src/app/intersectionMask/IntersectionMask.h
+        src/app/io/stb_image.h
 )
 
 # Add executables

@@ -24,10 +24,13 @@ public:
     void generatePathF10();
     void generatePathAnalyticalF10();
     void generatePathAnalyticalK08Eye();
+    void generatePathAnalyticalK08();
 
     float getMaxHeight(float x, float y, float radius, float radiusMargin, int dirX);
 
     void render();
+
+    static bool outsideRange(glm::vec2 cursor) ;
 };
 
 

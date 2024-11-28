@@ -9,7 +9,7 @@
 
 #include "../AppContext.h"
 #include "../../interface/camera/TopDownCamera.h"
-
+#include <glm/gtx/string_cast.hpp>
 PathGenerator::PathGenerator(AppContext &appContext) : appContext(appContext) {
     glGenFramebuffers(1, &mFBO);
     glGenTextures(1, &mTexId);
@@ -436,4 +436,124 @@ void PathGenerator::generatePathAnalyticalK08Eye() {
     appContext.pathOffset = {};
     appContext.pathScale = 1;
     appContext.pathRotation = 0;
+}
+
+void PathGenerator::generatePathAnalyticalK08() {
+    float radiusK08 = 4;
+
+    std::vector<glm::vec3> path;
+
+    int everyNth = 0;
+
+    std::vector<std::vector<glm::vec2>> startCursors = {{
+            {100.f / 256, 20.f / 255},
+            {100.f / 256, 230.f / 255},
+        }, {
+            {100.f / 256, 50.f / 256},
+            {146.f / 256, 2.f / 256},
+            {136.f / 256, 251.f / 256},
+            {1.f / 256, 244.f / 256},
+            {184.f / 256, 85.f / 256},
+        },{
+            {123.f / 256, 80.f / 255},
+        },{
+            {123.f / 256, 80.f / 255},
+        },{
+            {151.f / 256, 40.f / 255},
+            {220.f / 256, 250.f / 255},
+        },{
+            {151.f / 256, 9.f / 255},
+            {151.f / 256, 241.f / 255},
+        },
+    };
+
+    float uStep = 0.005;
+    float vStep = 0.005;
+    glm::vec2 step = {uStep, vStep};
+    glm::vec2 alongDir = {1, 0};
+    glm::vec2 perpDir = {0, 1};
+
+    std::vector<std::string> names = {
+            "wings", "body", "bottom_eye", "top_eye", "nose", "bottom_fin"
+    };
+    std::map<std::string, PatchC2*> patches = {
+            {"wings", appContext.wings.get()},
+            {"body", appContext.body.get()},
+            {"bottom_eye", appContext.bottomEye.get()},
+            {"top_eye", appContext.topEye.get()},
+            {"nose", appContext.nose.get()},
+            {"bottom_fin", appContext.bottomFin.get()},
+    };
+
+    for(int p = 0; p < names.size(); p++){
+        IntersectionMask &mask = *appContext.masks[names[p]];
+        auto &wings = *patches[names[p]];
+        for (auto startCursor: startCursors[p]) {
+            auto cursor = startCursor;
+            float alongSign = 1;
+            float perpSign = 1;
+            glm::vec<4, unsigned char> color = mask.sample(cursor.x, cursor.y);
+            for (int k = 0; k < 2; k++) {
+                int kk = 0;
+                int max = 500000;
+                std::vector<glm::vec3> miniPath;
+                while (!outsideRange(cursor) && kk++ < max) {
+                    if (mask.sample(cursor.x, cursor.y) == color) {
+                        float u = cursor.y * wings.rangeU();
+                        float v = cursor.x * wings.rangeV();
+                        auto point = wings.evaluateTool(u, v, -radiusK08);
+                        point.y -= radiusK08;
+                        miniPath.emplace_back(point);
+                        cursor += alongSign * alongDir * step;
+                    } else {
+                        cursor += perpSign * perpDir * step;
+                        if (mask.sample(cursor.x, cursor.y) == color) {
+                            while (mask.sample(cursor.x, cursor.y) == color) {
+                                cursor += alongSign * alongDir * step;
+                            }
+                            cursor -= alongSign * alongDir * step;
+                        } else {
+                            auto oldCursor = cursor;
+                            while (mask.sample(cursor.x, cursor.y) != color && glm::length(cursor - oldCursor) < 0.5) {
+                                cursor -= alongSign * alongDir * step;
+                            }
+                        }
+                        alongSign = -alongSign;
+                    }
+                }
+                cursor = startCursor;
+                alongSign = -1;
+                perpSign = -1;
+                if (!miniPath.empty()) {
+                    miniPath.insert(miniPath.begin(), {miniPath.front().x, 66, miniPath.front().z});
+                    miniPath.emplace_back(miniPath.back().x, 66, miniPath.back().z);
+                    path.insert(path.end(), miniPath.begin(), miniPath.end());
+                }
+            }
+        }
+    }
+
+
+
+    path.insert(path.begin(), {path.front().x, 66, path.front().z});
+    path.emplace_back(path.back().x, 66, path.back().z);
+    path.emplace_back(0, 66, 0);
+
+    appContext.mill->setPath(path);
+    std::vector<PositionVertex> vertices;
+    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+    appContext.running = false;
+
+    appContext.mill->setRadius(radiusK08);
+    appContext.mill->setType(Spherical);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
+}
+
+bool PathGenerator::outsideRange(glm::vec2 cursor) {
+    return (cursor.x < 0 && (cursor.y < 0 || cursor.y >= 1 )) || (cursor.x >= 1 && (cursor.y < 0 || cursor.y >= 1 ));
 }

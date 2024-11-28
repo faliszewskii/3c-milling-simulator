@@ -22,6 +22,7 @@
 #include "mill/Mill.h"
 #include "model/serializer/Serializer.h"
 #include "path/PathGenerator.h"
+#include "intersectionMask/IntersectionMask.h"
 
 struct AppContext {
     AppContext() = default;
@@ -82,11 +83,11 @@ struct AppContext {
     std::unique_ptr<PatchC2> butt;
     std::unique_ptr<PatchC2> nose;
     std::unique_ptr<PatchC2> wings;
+    std::unique_ptr<PatchC2> bottomFin;
 
     bool drawMeshes;
     bool drawMill;
 
-    std::unique_ptr<PatchC2> bottomFin;
     std::vector<std::reference_wrapper<PatchC0>> patchesC0;
 
     std::vector<std::reference_wrapper<PatchC2>> patchesC2;
@@ -98,6 +99,8 @@ struct AppContext {
     std::map<std::string, std::vector<glm::vec3>> outlines;
 
     int everyNthPathPoint;
+
+    std::map<std::string, std::unique_ptr<IntersectionMask>> masks;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H
