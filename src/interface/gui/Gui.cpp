@@ -213,6 +213,9 @@ void Gui::render() {
     if(ImGui::Button("Generate Analytical K08 path")) {
         appContext.pathGenerator->generatePathAnalyticalK08();
     }
+    if(ImGui::Button("Generate Intersections K08 path")) {
+        appContext.pathGenerator->generatePathAnalyticalK08Inter();
+    }
     ImGui::EndDisabled();
     ImGui::BeginDisabled(appContext.mill->getPath().empty());
     if(ImGui::Button("Save current path")) {
@@ -365,7 +368,7 @@ void Gui::setupPath(const std::string& outPath) {
     std::string millDiameter = outPath.substr(outPath.size()-2, 2);
     float millRadius = std::stoi(millDiameter) / 2.f;
     appContext.mill->setRadius(millRadius);
-    appContext.mill->setHeight(millRadius*4);
+    appContext.mill->setHeight(millRadius*6);
 
     auto points = appContext.gCodeParser->parse(outPath);
     appContext.mill->setPath(points);

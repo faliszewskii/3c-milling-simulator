@@ -67,7 +67,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.everyNthPathPoint = 1;
 
     // TODO DEBUG
-    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final7.json");
+    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final9.json");
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_outline.json",
                                              {"body_bottom", "body_top"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bottom_fin_outline.json",
@@ -82,6 +82,17 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
                                              {"wings"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/inside_outline.json",
                                              {"inside_top", "inside_bottom"});
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/butt_outline.json",
+                                             {"butt1", "butt3", "butt2"});
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bodyWings.json",
+{"bodyWings"}, false);
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_fin.json",
+{"body_fin1", "body_fin3", "body_fin4", "body_fin5", "body_fin6", "body_fin7", "body_fin2", "body_fin8"}, false);
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_tail.json",
+{"5", "4", "7", "11", "20", "18", "19", "24", "25", "26", "27", "28", "10", "12",
+    "17", "16", "15", "14", "13", "23", "22", "21", "6", "8", "9", "1", "2", "3"}, false);
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/butt_tail.json",
+                                {"butt_tail2", "butt_tail1", "butt_tail3", "butt_tail4"}, false);
     appContext.baseDimensions.y = 10;
 
 //    std::reverse(appContext.outlines["wings"].begin(), appContext.outlines["wings"].end());
@@ -92,16 +103,47 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     std::reverse(appContext.outlines["tail7"].begin(), appContext.outlines["tail7"].end());
     std::reverse(appContext.outlines["tail8"].begin(), appContext.outlines["tail8"].end());
 
+    std::reverse(appContext.outlines["butt1"].begin(), appContext.outlines["butt1"].end());
+    std::reverse(appContext.outlines["butt2"].begin(), appContext.outlines["butt2"].end());
+    std::reverse(appContext.outlines["butt3"].begin(), appContext.outlines["butt3"].end());
+
+    std::vector<glm::vec3> bodyFin;
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin1"].begin(), appContext.outlines["body_fin1"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin2"].begin(), appContext.outlines["body_fin2"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin3"].begin(), appContext.outlines["body_fin3"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin4"].begin(), appContext.outlines["body_fin4"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin5"].begin(), appContext.outlines["body_fin5"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin6"].begin(), appContext.outlines["body_fin6"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin7"].begin(), appContext.outlines["body_fin7"].end());
+    bodyFin.insert(bodyFin.end(), appContext.outlines["body_fin8"].begin(), appContext.outlines["body_fin8"].end());
+    appContext.outlines["body_fin"] = bodyFin;
+
+    std::vector<glm::vec3> buttTail;
+    buttTail.insert(buttTail.end(), appContext.outlines["butt_tail1"].begin(), appContext.outlines["butt_tail1"].end());
+    buttTail.insert(buttTail.end(), appContext.outlines["butt_tail2"].begin(), appContext.outlines["butt_tail2"].end());
+    buttTail.insert(buttTail.end(), appContext.outlines["butt_tail3"].begin(), appContext.outlines["butt_tail3"].end());
+    buttTail.insert(buttTail.end(), appContext.outlines["butt_tail4"].begin(), appContext.outlines["butt_tail4"].end());
+    appContext.outlines["butt_tail"] = buttTail;
+
+    std::vector<glm::vec3> bodyTail;
+    for (int i = 1; i <= 28; ++i) {
+        std::string key = std::to_string(i);
+        bodyTail.insert(bodyTail.end(), appContext.outlines[key].begin(), appContext.outlines[key].end());
+    }
+    appContext.outlines["body_tail"] = bodyTail;
+
     auto &v = appContext.outlines["wings"];
     appContext.outlines["wings_top"] = std::vector<glm::vec3>(v.begin(), v.begin() + v.size() / 2);
     appContext.outlines["wings_bottom"] = std::vector<glm::vec3>(v.begin() + v.size() / 2, v.end());
 
-    appContext.masks["wings"] = std::make_unique<IntersectionMask>("../res/masks/wing9.png");
-    appContext.masks["body"] = std::make_unique<IntersectionMask>("../res/masks/body5.png");
+    appContext.masks["wings"] = std::make_unique<IntersectionMask>("../res/masks/wing10.png");
+    appContext.masks["body"] = std::make_unique<IntersectionMask>("../res/masks/body7.png");
     appContext.masks["bottom_eye"] = std::make_unique<IntersectionMask>("../res/masks/bottom_eye1.png");
     appContext.masks["top_eye"] = std::make_unique<IntersectionMask>("../res/masks/top_eye1.png");
     appContext.masks["nose"] = std::make_unique<IntersectionMask>("../res/masks/nose.png");
-    appContext.masks["bottom_fin"] = std::make_unique<IntersectionMask>("../res/masks/bottom_fin1.png");
+    appContext.masks["bottom_fin"] = std::make_unique<IntersectionMask>("../res/masks/bottom_fin2.png");
+    appContext.masks["tail"] = std::make_unique<IntersectionMask>("../res/masks/tail8.png");
+    appContext.masks["butt"] = std::make_unique<IntersectionMask>("../res/masks/butt1.png");
 }
 
 void Scene::update() {

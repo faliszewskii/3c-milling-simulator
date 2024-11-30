@@ -13,7 +13,7 @@ struct AppContext;
 class Serializer {
 public:
     void importModel(AppContext &appContext, const std::string &path);
-    void importHelper(AppContext &appContext, const std::string &path, std::vector<std::string> outlineNames);
+    void importHelper(AppContext &appContext, const std::string &path, std::vector<std::string> outlineNames, bool transform = true);
 
     MG1::Scene& getScene(const std::string &path) const;
 

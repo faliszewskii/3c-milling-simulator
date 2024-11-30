@@ -9,6 +9,7 @@
 
 #include "../AppContext.h"
 #include "../../interface/camera/TopDownCamera.h"
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 PathGenerator::PathGenerator(AppContext &appContext) : appContext(appContext) {
     glGenFramebuffers(1, &mFBO);
@@ -47,7 +48,7 @@ void PathGenerator::generatePathK16() {
     int tracks = static_cast<int>((endingZ - startingZ) / betweenTrack);
     tracks++;
 
-    float advanceX = (endingX - startingX) / static_cast<float>(resolutionX);
+    float advanceX = (endingX - startingX) / static_cast<float>(resolutionX/4);
 
     std::vector<glm::vec3> path;
     path.emplace_back(0, startingY, 0);
@@ -56,7 +57,7 @@ void PathGenerator::generatePathK16() {
     path.emplace_back(mill);
     for(float depth : depths) {
         for(int y = 0; y < tracks; y++) {
-            for(int x = 0; x < resolutionX; x++) {
+            for(int x = 0; x < resolutionX/4; x++) {
                 float heightMapValue = 0;
                 int hmX = static_cast<int>((x * advanceX - baseMargin) * resolutionX / 150);
                 int hmY = static_cast<int>((y * betweenTrack - baseMargin) * resolutionY / 150);
@@ -75,8 +76,11 @@ void PathGenerator::generatePathK16() {
                 // }
                 mill.y = heightMapValue+heightMargin > depth ? heightMapValue+heightMargin: depth;
                 mill += glm::vec3(dirX * advanceX, 0, 0);
-                path.emplace_back(mill);
+                if(heightMapValue+heightMargin > depth) {
+                    path.emplace_back(mill);
+                }
             }
+            path.emplace_back(mill);
             mill += glm::vec3(0, 0, dirZ * betweenTrack);
             path.emplace_back(mill);
             dirX *= -1;
@@ -135,7 +139,7 @@ void PathGenerator::generatePathF10() {
     int dirX = 1;
     float radiusF10 = 5.f;
     float betweenTrack = radiusF10;
-    float radiusMargin = 2.f;
+    float radiusMargin = 3.f;
 
     int tracks;
     float advanceX;
@@ -174,12 +178,13 @@ void PathGenerator::generatePathF10() {
         switch(i) {
             case 0:
                 startingX = -87;
-                startingZ = -87 + 20;
+                startingZ = -87 + 18;
                 endingX = 87;
                 endingZ = 60;
                 mill = glm::vec3(startingX, startingY, startingZ);
                 path.emplace_back(mill);
                 mill.y = depth;
+                path.emplace_back(mill);
                 dirX = 1;
                 tracks = static_cast<int>((endingZ - startingZ) / betweenTrack);
                 tracks++;
@@ -219,6 +224,7 @@ void PathGenerator::generatePathF10() {
             for(int x = 0; x >= 0 && x < resolutionX; x+= dirX) {
                 float heightMapValue = getMaxHeight(mill.x, mill.z, radiusF10, radiusMargin, dirX);
                 if(heightMapValue > depth) {
+                    path.emplace_back(mill);
                     y++;
                     mill += moveY(angle);
                     float bottomHeight = getMaxHeight(mill.x, mill.z, radiusF10, radiusMargin, dirX);
@@ -241,8 +247,9 @@ void PathGenerator::generatePathF10() {
                     dirX *= -1;
                 }
                 mill += moveX(dirX, advanceX, angle);
-                path.emplace_back(mill);
+                //path.emplace_back(mill);
             }
+            path.emplace_back(mill);
             mill += moveY(angle);
             path.emplace_back(mill);
             dirX *= -1;
@@ -329,7 +336,10 @@ void PathGenerator::generatePathAnalyticalF10() {
             "tail7",
             "tail8",
             "tail2",
-            "tail1",
+            "butt3",
+            "butt2",
+            // "butt1",
+            // "tail1",
             "tail4",
             "tail3",
             "tail5",
@@ -445,15 +455,24 @@ void PathGenerator::generatePathAnalyticalK08() {
 
     int everyNth = 0;
 
-    std::vector<std::vector<glm::vec2>> startCursors = {{
+    std::vector<std::vector<glm::vec2>> startCursors = {
+        {
+            {100.f / 256, 30.f / 255},
+        },{
+            {130.f / 256, 70.f / 255},
+            {190.f / 256, 105.f / 255},
+            {90.f / 256, 30.f / 255}
+        },
+        {
             {100.f / 256, 20.f / 255},
             {100.f / 256, 230.f / 255},
         }, {
-            {100.f / 256, 50.f / 256},
+            {20.f / 256, 10.f / 256},
             {146.f / 256, 2.f / 256},
             {136.f / 256, 251.f / 256},
             {1.f / 256, 244.f / 256},
             {184.f / 256, 85.f / 256},
+            {50.f / 256, 90.f / 256},
         },{
             {123.f / 256, 80.f / 255},
         },{
@@ -467,16 +486,18 @@ void PathGenerator::generatePathAnalyticalK08() {
         },
     };
 
-    float uStep = 0.005;
+    float uStep = 0.015;
     float vStep = 0.005;
     glm::vec2 step = {uStep, vStep};
     glm::vec2 alongDir = {1, 0};
     glm::vec2 perpDir = {0, 1};
 
     std::vector<std::string> names = {
-            "wings", "body", "bottom_eye", "top_eye", "nose", "bottom_fin"
+             "butt", "tail", "wings", "body", "bottom_eye", "top_eye", "nose", "bottom_fin",
     };
-    std::map<std::string, PatchC2*> patches = {
+    std::map<std::string, std::variant<PatchC2*, PatchC0*>> patches = {
+            {"butt", appContext.butt.get()},
+            {"tail", appContext.tail.get()},
             {"wings", appContext.wings.get()},
             {"body", appContext.body.get()},
             {"bottom_eye", appContext.bottomEye.get()},
@@ -487,7 +508,7 @@ void PathGenerator::generatePathAnalyticalK08() {
 
     for(int p = 0; p < names.size(); p++){
         IntersectionMask &mask = *appContext.masks[names[p]];
-        auto &wings = *patches[names[p]];
+        auto wings = patches[names[p]];
         for (auto startCursor: startCursors[p]) {
             auto cursor = startCursor;
             float alongSign = 1;
@@ -499,9 +520,12 @@ void PathGenerator::generatePathAnalyticalK08() {
                 std::vector<glm::vec3> miniPath;
                 while (!outsideRange(cursor) && kk++ < max) {
                     if (mask.sample(cursor.x, cursor.y) == color) {
-                        float u = cursor.y * wings.rangeU();
-                        float v = cursor.x * wings.rangeV();
-                        auto point = wings.evaluateTool(u, v, -radiusK08);
+                        auto point = std::visit(overloaded {
+                            [&](auto el) {
+                                float u = cursor.y * el->rangeU();
+                                float v = cursor.x * el->rangeV();
+                                return el->evaluateTool(u, v, -radiusK08);
+                        }}, wings);
                         point.y -= radiusK08;
                         miniPath.emplace_back(point);
                         cursor += alongSign * alongDir * step;
@@ -556,4 +580,76 @@ void PathGenerator::generatePathAnalyticalK08() {
 
 bool PathGenerator::outsideRange(glm::vec2 cursor) {
     return (cursor.x < 0 && (cursor.y < 0 || cursor.y >= 1 )) || (cursor.x >= 1 && (cursor.y < 0 || cursor.y >= 1 ));
+}
+
+
+void PathGenerator::generatePathAnalyticalK08Inter() {
+    float radiusK08 = 4.0f;
+
+
+
+    std::vector<glm::vec3> path;
+    path.emplace_back(0, 66, 0);
+
+    std::vector<PatchC2*> patches {
+        appContext.body.get(),
+        appContext.body.get(),
+        appContext.body.get(),
+        appContext.butt.get(),
+    };
+
+    std::vector<std::string> outlinePaths = {
+            "bodyWings",
+            "body_fin",
+            "body_tail",
+            "butt_tail"
+    };
+    int everyNth = 0;
+    float epsilon = 0.5;
+    bool skip = false;
+    int j = 0;
+    for (int i = 0; i < outlinePaths.size(); i++) {
+        if(!skip) j = 0;
+        skip = false;
+        for (; j < appContext.outlines[outlinePaths[i]].size(); j++) {
+            auto uv = appContext.outlines[outlinePaths[i]][j];
+            auto point = patches[i]->evaluateTool(uv.x, uv.y, -radiusK08);
+            if(j == 0) path.emplace_back(glm::vec3{point.x, 66.f, point.z});
+            if(j == appContext.outlines[outlinePaths[i]].size()-1) path.emplace_back(glm::vec3{point.x, 66.f, point.z});
+            if(point.y < 15 + radiusK08 + 1) continue;
+            // if(i != outlinePaths.size()-1) {
+            //     for(int k = 0; k < appContext.outlines[outlinePaths[i+1]].size(); k++) {
+            //         auto &ouv = appContext.outlines[outlinePaths[i+1]][k];
+            //         auto o = appContext.body->evaluateTool(ouv.x, ouv.y, radiusK08);
+            //         if(glm::length(point - o) < epsilon) {
+            //             skip = true;
+            //             j = k;
+            //             break;
+            //         }
+            //     }
+            // }
+            if (skip) break;
+            if(everyNth++ % appContext.everyNthPathPoint == 0) {
+                point.y -= radiusK08;
+                path.emplace_back(point);
+            }
+        }
+    }
+
+    path.emplace_back(path.back().x, 66, path.back().z);
+    path.emplace_back(0, 66, 0);
+
+    appContext.mill->setPath(path);
+    std::vector<PositionVertex> vertices;
+    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+    appContext.running = false;
+
+    appContext.mill->setRadius(radiusK08);
+    appContext.mill->setType(Spherical);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
 }

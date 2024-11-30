@@ -194,10 +194,10 @@ void Serializer::importModel(AppContext &appContext, const std::string &path) {
     loadPatches(appContext, scene, idMap);
 }
 
-void Serializer::importHelper(AppContext &appContext, const std::string &fpath, std::vector<std::string> outlineNames) {
+void Serializer::importHelper(AppContext &appContext, const std::string &fpath, std::vector<std::string> outlineNames, bool transform ) {
     MG1::Scene &scene = getScene(fpath);
     auto scenePoints = loadPoints(scene);
-    transformPoints(appContext, scenePoints);
+    if(transform) transformPoints(appContext, scenePoints);
     auto idMap = uploadPoints(appContext, scenePoints);
 
 
