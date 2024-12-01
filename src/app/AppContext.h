@@ -84,6 +84,7 @@ struct AppContext {
     std::unique_ptr<PatchC2> nose;
     std::unique_ptr<PatchC2> wings;
     std::unique_ptr<PatchC2> bottomFin;
+    std::unique_ptr<PatchC2> fin;
 
     bool drawMeshes;
     bool drawMill;

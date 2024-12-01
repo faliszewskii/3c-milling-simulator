@@ -67,7 +67,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.everyNthPathPoint = 1;
 
     // TODO DEBUG
-    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final9.json");
+    appContext.modelSerializer->importModel(appContext, "../res/models/fish_final13.json");
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_outline.json",
                                              {"body_bottom", "body_top"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bottom_fin_outline.json",
@@ -84,6 +84,9 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
                                              {"inside_top", "inside_bottom"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/butt_outline.json",
                                              {"butt1", "butt3", "butt2"});
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/fin_outline.json",
+                                             {"fin"});
+
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bodyWings.json",
 {"bodyWings"}, false);
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_fin.json",
@@ -92,7 +95,9 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 {"5", "4", "7", "11", "20", "18", "19", "24", "25", "26", "27", "28", "10", "12",
     "17", "16", "15", "14", "13", "23", "22", "21", "6", "8", "9", "1", "2", "3"}, false);
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/butt_tail.json",
-                                {"butt_tail2", "butt_tail1", "butt_tail3", "butt_tail4"}, false);
+{"butt_tail2", "butt_tail1", "butt_tail3", "butt_tail4"}, false);
+    appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_fin_top.json",
+                                {"body_fin_top"}, false);
     appContext.baseDimensions.y = 10;
 
 //    std::reverse(appContext.outlines["wings"].begin(), appContext.outlines["wings"].end());
@@ -136,14 +141,20 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.outlines["wings_top"] = std::vector<glm::vec3>(v.begin(), v.begin() + v.size() / 2);
     appContext.outlines["wings_bottom"] = std::vector<glm::vec3>(v.begin() + v.size() / 2, v.end());
 
+    // std::reverse(appContext.outlines["fin"].begin(), appContext.outlines["fin"].end());
+    auto &v1 = appContext.outlines["fin"];
+    appContext.outlines["fin_top"] = std::vector<glm::vec3>(v1.begin(), v1.begin() + v1.size() / 2);
+    appContext.outlines["fin_bottom"] = std::vector<glm::vec3>(v1.begin() + v1.size() / 2, v1.end());
+
     appContext.masks["wings"] = std::make_unique<IntersectionMask>("../res/masks/wing10.png");
-    appContext.masks["body"] = std::make_unique<IntersectionMask>("../res/masks/body7.png");
+    appContext.masks["body"] = std::make_unique<IntersectionMask>("../res/masks/body8.png");
     appContext.masks["bottom_eye"] = std::make_unique<IntersectionMask>("../res/masks/bottom_eye1.png");
     appContext.masks["top_eye"] = std::make_unique<IntersectionMask>("../res/masks/top_eye1.png");
     appContext.masks["nose"] = std::make_unique<IntersectionMask>("../res/masks/nose.png");
     appContext.masks["bottom_fin"] = std::make_unique<IntersectionMask>("../res/masks/bottom_fin2.png");
     appContext.masks["tail"] = std::make_unique<IntersectionMask>("../res/masks/tail8.png");
     appContext.masks["butt"] = std::make_unique<IntersectionMask>("../res/masks/butt1.png");
+    appContext.masks["fin"] = std::make_unique<IntersectionMask>("../res/masks/fin.png");
 }
 
 void Scene::update() {

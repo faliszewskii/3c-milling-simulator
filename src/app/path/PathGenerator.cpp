@@ -282,7 +282,7 @@ void PathGenerator::render() {
     glViewport(0, 0, resolutionX, resolutionY);
     glClearColor(1,1,1, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+    glDisable(GL_CULL_FACE);
     TopDownCamera camera;
 
     appContext.patchC0ShaderQuad->use();
@@ -315,6 +315,24 @@ void PathGenerator::render() {
     appContext.nose->render(*appContext.patchC2ShaderQuad);
     appContext.wings->render(*appContext.patchC2ShaderQuad);
     appContext.bottomFin->render(*appContext.patchC2ShaderQuad);
+    appContext.fin->render(*appContext.patchC2ShaderQuad);
+
+    glEnable(GL_CULL_FACE);
+}
+
+bool doSegmentsIntersect(const glm::vec2& a1, const glm::vec2& a2, const glm::vec2& b1, const glm::vec2& b2) {
+
+    glm::vec2 p = a1;
+    glm::vec2 q = b1;
+    glm::vec2 r = a2 - a1;
+    glm::vec2 s = b2 - b1;
+
+    auto cp = [](glm::vec2 v, glm::vec2 w) { return v.x * w.y - v.y * w.x; };
+
+    float t = cp(q - p, s) / cp(r, s);
+    float u = cp(q - p, r) / cp(r, s);
+
+    return t >= 0 && t <= 1 && u >= 0 && u <= 1;
 }
 
 void PathGenerator::generatePathAnalyticalF10() {
@@ -331,6 +349,9 @@ void PathGenerator::generatePathAnalyticalF10() {
             "body_top",
             "wings_top",
             "wings_bottom",
+            "body_top",
+            "fin_top",
+            "fin_bottom",
             "body_top",
             "tail6",
             "tail7",
@@ -360,14 +381,30 @@ void PathGenerator::generatePathAnalyticalF10() {
     for (int i = 0; i < outlinePaths.size(); i++) {
         if(!skip) j = 0;
         skip = false;
-        for (; j < appContext.outlines[outlinePaths[i]].size(); j++) {
+        int n1 = appContext.outlines[outlinePaths[i]].size();
+        for (; j < n1; j++) {
             auto point = appContext.outlines[outlinePaths[i]][j];
-            if(i != outlinePaths.size()-1) {
-                for(int k = 0; k < appContext.outlines[outlinePaths[i+1]].size(); k++) {
-                    auto &o = appContext.outlines[outlinePaths[i+1]][k];
+            auto nextPoint = appContext.outlines[outlinePaths[i]][(j + 1)%n1];
+            if(j != n1-1 && i != outlinePaths.size()-1) {
+                int n2 = appContext.outlines[outlinePaths[i+1]].size();
+                for(int k = 0; k < n2-1; k++) {
+                    auto o = appContext.outlines[outlinePaths[i+1]][k];
+                    auto nextO = appContext.outlines[outlinePaths[i+1]][(k+1)%n2];
+                    static auto get2D = [](glm::vec3 v){return glm::vec2{v.x, v.z};};
+                    if(doSegmentsIntersect(get2D(point), get2D(nextPoint), get2D(o), get2D(nextO))) {
+                        skip = true;
+                        j = (k+1)%n2;
+                        break;
+                    }
+                }
+            }
+            if(j == n1-1 && i != outlinePaths.size()-1) {
+                int n2 = appContext.outlines[outlinePaths[i+1]].size();
+                for(int k = 0; k < n2; k++) {
+                    auto o = appContext.outlines[outlinePaths[i+1]][k];
                     if(glm::length(point - o) < epsilon) {
                         skip = true;
-                        j = k;
+                        j = k+1;
                         break;
                     }
                 }
@@ -452,6 +489,7 @@ void PathGenerator::generatePathAnalyticalK08() {
     float radiusK08 = 4;
 
     std::vector<glm::vec3> path;
+    path.emplace_back(0, 66, 0);
 
     int everyNth = 0;
 
@@ -467,22 +505,25 @@ void PathGenerator::generatePathAnalyticalK08() {
             {100.f / 256, 20.f / 255},
             {100.f / 256, 230.f / 255},
         }, {
-            {20.f / 256, 10.f / 256},
-            {146.f / 256, 2.f / 256},
-            {136.f / 256, 251.f / 256},
-            {1.f / 256, 244.f / 256},
-            {184.f / 256, 85.f / 256},
-            {50.f / 256, 90.f / 256},
+            {151.f / 256, 9.f / 255},
+            {151.f / 256, 241.f / 255},
         },{
-            {123.f / 256, 80.f / 255},
-        },{
-            {123.f / 256, 80.f / 255},
+            {110.f / 256, 160.f / 255},
         },{
             {151.f / 256, 40.f / 255},
             {220.f / 256, 250.f / 255},
         },{
-            {151.f / 256, 9.f / 255},
-            {151.f / 256, 241.f / 255},
+            {123.f / 256, 80.f / 255},
+        },{
+            {123.f / 256, 80.f / 255},
+        },{
+            {20.f / 256, 10.f / 256},
+            {146.f / 256, 2.f / 256},
+            {136.f / 256, 251.f / 256},
+            {1.f / 256, 244.f / 256},
+            // {184.f / 256, 85.f / 256},
+            {50.f / 256, 90.f / 256},
+            {193.f / 256, 252.f / 256},
         },
     };
 
@@ -493,17 +534,18 @@ void PathGenerator::generatePathAnalyticalK08() {
     glm::vec2 perpDir = {0, 1};
 
     std::vector<std::string> names = {
-             "butt", "tail", "wings", "body", "bottom_eye", "top_eye", "nose", "bottom_fin",
+             "butt", "tail", "wings", "bottom_fin", "fin", "nose", "bottom_eye", "top_eye", "body"
     };
     std::map<std::string, std::variant<PatchC2*, PatchC0*>> patches = {
             {"butt", appContext.butt.get()},
             {"tail", appContext.tail.get()},
             {"wings", appContext.wings.get()},
-            {"body", appContext.body.get()},
+            {"bottom_fin", appContext.bottomFin.get()},
+            {"fin", appContext.fin.get()},
+            {"nose", appContext.nose.get()},
             {"bottom_eye", appContext.bottomEye.get()},
             {"top_eye", appContext.topEye.get()},
-            {"nose", appContext.nose.get()},
-            {"bottom_fin", appContext.bottomFin.get()},
+            {"body", appContext.body.get()},
     };
 
     for(int p = 0; p < names.size(); p++){
@@ -596,13 +638,15 @@ void PathGenerator::generatePathAnalyticalK08Inter() {
         appContext.body.get(),
         appContext.body.get(),
         appContext.butt.get(),
+        appContext.body.get(),
     };
 
     std::vector<std::string> outlinePaths = {
             "bodyWings",
             "body_fin",
             "body_tail",
-            "butt_tail"
+            "butt_tail",
+            "body_fin_top"
     };
     int everyNth = 0;
     float epsilon = 0.5;

@@ -14,7 +14,11 @@ void GCodeExporter::parse(const std::string &filePath, std::vector<glm::vec3> pa
 
     // N64G01X-3.376Y40.362Z44.063
     for(int line = 0; line < path.size(); line++) {
+#ifdef _WIN32
+        outfile << "N" << line+1 << "G01X" << path[line].x << "Y" << -path[line].z << "Z" << path[line].y << "\n";
+#else
         outfile << "N" << line+1 << "G01X" << path[line].x << "Y" << -path[line].z << "Z" << path[line].y << "\r\n";
+#endif
     }
 
     outfile.close();

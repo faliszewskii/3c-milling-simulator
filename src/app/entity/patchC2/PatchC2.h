@@ -13,6 +13,7 @@
 
 class PatchC2 {
 public:
+    std::string name="";
     Mesh<PositionVertex> mesh;
 
     int patchCountX;
@@ -239,7 +240,7 @@ public:
                           + uN[2] * ( vN[0]*p[2][0] + vN[1]*p[2][1] + vN[2]*p[2][2] + vN[3]*p[2][3] )
                           + uN[3] * ( vN[0]*p[3][0] + vN[1]*p[3][1] + vN[2]*p[3][2] + vN[3]*p[3][3] );
 
-        return point + normal;
+        return point + normal * (name=="fin"?-1.f:1.f);
     }
 };
 

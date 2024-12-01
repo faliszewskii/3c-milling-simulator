@@ -88,6 +88,7 @@ void Serializer::loadPatches(AppContext &appContext, MG1::Scene &scene, std::map
             {"nose", &appContext.nose},
             {"wings", &appContext.wings},
             {"bottom_fin", &appContext.bottomFin},
+            {"fin", &appContext.fin},
 
     };
 
@@ -119,6 +120,7 @@ void Serializer::loadPatches(AppContext &appContext, MG1::Scene &scene, std::map
         auto indices = getPatchIndices(false, true, patchCountWidth, patchCountLength);
         auto patch = PatchC2(vertices, indices, patchCountWidth, patchCountLength, wrapped);
         patch.controlPoints = controlPoints;
+        patch.name = surfaceData.name;
         *patchesC2[surfaceData.name] = std::make_unique<PatchC2>(patch);
         appContext.patchesC2.emplace_back(**patchesC2[surfaceData.name]);
     }
