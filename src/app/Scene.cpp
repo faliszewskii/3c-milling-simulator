@@ -22,7 +22,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.basicShader = std::make_unique<Shader>(Shader::createTraditionalShader(
             "../res/shaders/basic/position.vert", "../res/shaders/basic/white.frag"));
     appContext.millingBaseShader = std::make_unique<Shader>(Shader::createTraditionalShader(
-            "../res/shaders/millingBase/millingBase.vert", "../res/shaders/millingBase/millingBase.geom", "../res/shaders/phong/phong.frag"));
+            "../res/shaders/millingBase/millingBase.vert", "../res/shaders/millingBase/millingBase.geom", "../res/shaders/millingBase/millingBase.frag"));
     appContext.patchC0Shader = std::make_unique<Shader>(Shader::createTraditionalShader(
                 "../res/shaders/patch/patch.vert", "../res/shaders/patch/patch.tesc", "../res/shaders/patch/patch.tese", "../res/shaders/patch/patch.frag"));
     appContext.patchC2Shader = std::make_unique<Shader>(Shader::createTraditionalShader(
@@ -98,7 +98,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 {"butt_tail2", "butt_tail1", "butt_tail3", "butt_tail4"}, false);
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_fin_top.json",
                                 {"body_fin_top"}, false);
-    appContext.baseDimensions.y = 10;
+    appContext.baseDimensions.y = 50;
 
 //    std::reverse(appContext.outlines["wings"].begin(), appContext.outlines["wings"].end());
     std::reverse(appContext.outlines["tail5"].begin(), appContext.outlines["tail5"].end());
@@ -155,6 +155,9 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.masks["tail"] = std::make_unique<IntersectionMask>("../res/masks/tail8.png");
     appContext.masks["butt"] = std::make_unique<IntersectionMask>("../res/masks/butt1.png");
     appContext.masks["fin"] = std::make_unique<IntersectionMask>("../res/masks/fin.png");
+
+    appContext.pathGenerator->render();
+    appContext.modelHeightMap = appContext.pathGenerator->mTexId;
 }
 
 void Scene::update() {
@@ -196,6 +199,9 @@ void Scene::render() {
     appContext.millingBaseShader->setUniform("uHeightScale", appContext.baseDimensions.y);
     appContext.heightMap->heightMap->bind(1);
     appContext.millingBaseShader->setUniform("uHeightMap", 1);
+    glBindTextureUnit(2, appContext.modelHeightMap);
+    appContext.millingBaseShader->setUniform("uModelHeightMap", 2);
+    appContext.millingBaseShader->setUniform("useColorMap", appContext.useColorMap);
     appContext.light->setupPointLight(*appContext.millingBaseShader);
     appContext.base->render((appContext.heightMap->heightMapSize.x+2) * (appContext.heightMap->heightMapSize.y+2));
 

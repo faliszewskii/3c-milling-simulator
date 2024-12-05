@@ -4,10 +4,12 @@ layout(points) in; // Expecting one point per instance
 layout(triangle_strip, max_vertices = 6) out;
 
 uniform sampler2D uHeightMap;
+uniform sampler2D uModelHeightMap;
 uniform vec2 uGridSize;    // n by m grid
 uniform vec2 uBaseSize;
 uniform float uMaxHeight;  // Maximum height for the cubes
 uniform float uHeightScale; // Scale of the height
+uniform bool useColorMap;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -18,6 +20,7 @@ flat in int instanceID[];  // Instance ID passed from vertex shader
 out vec3 normal;
 out vec3 fragPos;
 out vec2 texCoords;
+out float color;
 
 void CreateQuadWall(vec3 position1, vec3 position2, vec3 norm) {
     vec2 cubeSize = 1.f / uGridSize * uBaseSize;
@@ -39,13 +42,14 @@ void CreateQuadWall(vec3 position1, vec3 position2, vec3 norm) {
         gl_Position = projection * view * vec4(cubeVertices[indices[i]], 1);
         fragPos = cubeVertices[indices[i]];
         normal = norm;
+        color = 1;
         texCoords = vec2(0,0);
         EmitVertex();
         if (i % 3 == 2) EndPrimitive(); // End each quad
     }
 }
 
-void CreateQuad(vec3 position, vec4 height, vec3 norm1, vec3 norm2) {
+void CreateQuad(vec3 position, vec4 height, vec3 norm1, vec3 norm2, vec4 colors) {
     vec2 cubeSize = 1.f / uGridSize * uBaseSize;
     vec2 cubeSizeHalf = cubeSize / 2.f;
     vec3 cubeVertices[4] = vec3[](
@@ -63,11 +67,16 @@ void CreateQuad(vec3 position, vec4 height, vec3 norm1, vec3 norm2) {
     0, 3, 2, 0, 2, 1
     );
 
+    float colorsA[6] = float[](
+        colors[0], colors[3], colors[2], colors[0], colors[2], colors[1]
+    );
+
     // Emit cube vertices as triangle strips
     for (int i = 0; i < 6; i++) {
         gl_Position = projection * view * vec4(position + cubeVertices[indices[i]], 1);
         fragPos = position + cubeVertices[indices[i]];
         normal = i < 3 ? norm1: norm2;
+        color = colorsA[i];
         texCoords = vec2(0,0);
         EmitVertex();
         if (i % 3 == 2) EndPrimitive(); // End each quad
@@ -196,18 +205,38 @@ void main() {
     vec3 gridPosition = vec3(float(col)/uGridSize.x * uBaseSize.x - uBaseSize.x/2.f, 0.0, float(row)/uGridSize.y * uBaseSize.y - uBaseSize.y/2.f);
 
     vec2 uv;
+    vec2 uvModel;
     uv = vec2(float(col-0.5) / uGridSize.x, float(row-0.5) / uGridSize.y);
     uv = vec2(uv.y, uv.x);
     float height1 = textureBicubic(uHeightMap, uv).r * uHeightScale;
+    uvModel.x = uv.y;
+    uvModel.y = uv.x;
+    float target1 = textureBicubic(uModelHeightMap, uvModel).r ;
     uv = vec2(float(col+0.5) / uGridSize.x, float(row-0.5) / uGridSize.y);
     uv = vec2(uv.y, uv.x);
+    uvModel.x = uv.y;
+    uvModel.y = uv.x;
     float height2 = textureBicubic(uHeightMap, uv).r * uHeightScale;
+    float target2 = textureBicubic(uModelHeightMap, uvModel).r ;
     uv = vec2(float(col+0.5) / uGridSize.x, float(row+0.5) / uGridSize.y);
     uv = vec2(uv.y, uv.x);
+    uvModel.x = uv.y;
+    uvModel.y = uv.x;
     float height3 = textureBicubic(uHeightMap, uv).r * uHeightScale;
+    float target3 = textureBicubic(uModelHeightMap, uvModel).r ;
     uv = vec2(float(col-0.5) / uGridSize.x, float(row+0.5) / uGridSize.y);
     uv = vec2(uv.y, uv.x);
+    uvModel.x = uv.y;
+    uvModel.y = uv.x;
     float height4 = textureBicubic(uHeightMap, uv).r * uHeightScale;
+    float target4 = textureBicubic(uModelHeightMap, uvModel).r;
+
+    vec4 colors = vec4(
+         (height1-15)/35 - (1-target1),
+         (height2-15)/35 - (1-target2),
+         (height3-15)/35 - (1-target3),
+         (height4-15)/35 - (1-target4)
+    );
 
     // Vertex positions with heights
     vec3 p1 = vec3(float(col-0.5) / uGridSize.x, float(row-0.5) / uGridSize.y, height1);
@@ -220,5 +249,5 @@ void main() {
     vec3 normalTri2 = normalize(cross(p3 - p1, p2 - p1)); // Triangle 2: p1, p3, p2
 
 
-    CreateQuad(gridPosition, vec4(height1, height2, height3, height4), normalTri1, normalTri2);
+    CreateQuad(gridPosition, vec4(height1, height2, height3, height4), normalTri1, normalTri2, colors);
 }

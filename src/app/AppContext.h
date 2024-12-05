@@ -102,6 +102,8 @@ struct AppContext {
     int everyNthPathPoint;
 
     std::map<std::string, std::unique_ptr<IntersectionMask>> masks;
+    GLuint modelHeightMap;
+    bool useColorMap;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

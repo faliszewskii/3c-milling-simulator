@@ -10,7 +10,6 @@ struct AppContext;
 
 class PathGenerator {
     GLuint mFBO = 0;
-    GLuint mTexId = 0;
     GLuint mDepthId = 0;
     int resolutionX = 512;
     int resolutionY = 512;
@@ -18,6 +17,7 @@ class PathGenerator {
     AppContext& appContext;
 
 public:
+    GLuint mTexId = 0;
     PathGenerator(AppContext &appContext);
 
     void generatePathK16();

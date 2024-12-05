@@ -185,6 +185,7 @@ void Gui::render() {
     ImGui::Checkbox("Draw Mill Path", &appContext.drawPath);
     ImGui::Checkbox("Draw Meshes", &appContext.drawMeshes);
     ImGui::Checkbox("Draw Mill", &appContext.drawMill);
+    ImGui::Checkbox("Use color map", &appContext.useColorMap);
 
     ImGui::SeparatorText("Error Messages");
     char *errors = vectorToCharPointer(appContext.errorMessages);
