@@ -8,6 +8,7 @@ in float color;
 
 uniform vec3 viewPos;
 uniform bool useColorMap;
+uniform float errorMargin;
 
 struct Material {
     bool hasTexture;
@@ -50,14 +51,22 @@ vec3 calculateLight(PointLight light, vec3 N, vec3 fragPos, vec3 viewDir) {
 void main() {
     vec4 objectColor;
     if(useColorMap) {
-        if(color >= -0.05 && color <= 0.05) {
-            objectColor = vec4(vec3(0, (0.05-abs(color))/0.05, 0), 1);
+        float r = 0;
+        float g = 0;
+        float b = 0;
+        float error = errorMargin / 35;
+        if(color >= -error && color <= error) {
+            g =  0.5 + (error-abs(color))/error;
+            if(g > 1) g = 1;
         }
         else if(color < 0) {
-            objectColor = vec4(vec3(-color, 0.05, 0), 1);
+            r = 0.5 + -color;
+            if(r > 1) r = 1;
         } else {
-            objectColor = vec4(vec3(0, 0.05, color), 1);
+            b = 0.5 + color;
+            if(b > 1) b = 1;
         }
+        objectColor = vec4(vec3(r, g, b) + vec3(0.2), 1);
     } else {
         objectColor = material.hasTexture? texture(material.texture, texCoords) : material.albedo;
     }

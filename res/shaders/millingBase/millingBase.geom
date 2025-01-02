@@ -232,10 +232,10 @@ void main() {
     float target4 = textureBicubic(uModelHeightMap, uvModel).r;
 
     vec4 colors = vec4(
-         (height1-15)/35 - (1-target1),
-         (height2-15)/35 - (1-target2),
-         (height3-15)/35 - (1-target3),
-         (height4-15)/35 - (1-target4)
+         (height1+0.1-15)/35 - (1-target1),
+         (height2+0.1-15)/35 - (1-target2),
+         (height3+0.1-15)/35 - (1-target3),
+         (height4+0.1-15)/35 - (1-target4)
     );
 
     // Vertex positions with heights

@@ -5,6 +5,8 @@
 #ifndef PATHGENERATOR_H
 #define PATHGENERATOR_H
 
+#include <vector>
+
 #include "../../opengl/shader/Shader.h"
 struct AppContext;
 
@@ -16,9 +18,14 @@ class PathGenerator {
 
     AppContext& appContext;
 
+    std::vector<glm::vec3> path;
+
 public:
     GLuint mTexId = 0;
     PathGenerator(AppContext &appContext);
+
+    void setupPathGeneration();
+    void endPathGeneration();
 
     void generatePathK16();
     void generatePathF10();
@@ -26,10 +33,13 @@ public:
     void generatePathAnalyticalK08Eye();
     void generatePathAnalyticalK08();
     void generatePathAnalyticalK08Inter();
+    void generatePathFullF10();
+    void generatePathFullK08();
 
     float getMaxHeight(float x, float y, float radius, float radiusMargin, int dirX);
 
     void render();
+
 
     static bool outsideRange(glm::vec2 cursor) ;
 };

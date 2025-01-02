@@ -55,6 +55,8 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.drawPath = true;
     appContext.drawMeshes = true;
     appContext.drawMill = true;
+    appContext.useColorMap = false;
+    appContext.errorMargin = 1;
 
     appContext.modelSerializer = std::make_unique<Serializer>();
     appContext.surfaceIntersection = std::make_unique<SurfaceIntersection>();
@@ -68,6 +70,7 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
 
     // TODO DEBUG
     appContext.modelSerializer->importModel(appContext, "../res/models/fish_final13.json");
+
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/body_outline.json",
                                              {"body_bottom", "body_top"});
     appContext.modelSerializer->importHelper(appContext, "../res/models/outlines/bottom_fin_outline.json",
@@ -202,6 +205,7 @@ void Scene::render() {
     glBindTextureUnit(2, appContext.modelHeightMap);
     appContext.millingBaseShader->setUniform("uModelHeightMap", 2);
     appContext.millingBaseShader->setUniform("useColorMap", appContext.useColorMap);
+    appContext.millingBaseShader->setUniform("errorMargin", appContext.errorMargin);
     appContext.light->setupPointLight(*appContext.millingBaseShader);
     appContext.base->render((appContext.heightMap->heightMapSize.x+2) * (appContext.heightMap->heightMapSize.y+2));
 

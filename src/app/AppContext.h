@@ -104,6 +104,7 @@ struct AppContext {
     std::map<std::string, std::unique_ptr<IntersectionMask>> masks;
     GLuint modelHeightMap;
     bool useColorMap;
+    float errorMargin;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

@@ -185,7 +185,8 @@ void Gui::render() {
     ImGui::Checkbox("Draw Mill Path", &appContext.drawPath);
     ImGui::Checkbox("Draw Meshes", &appContext.drawMeshes);
     ImGui::Checkbox("Draw Mill", &appContext.drawMill);
-    ImGui::Checkbox("Use color map", &appContext.useColorMap);
+    ImGui::Checkbox("Use Color Map", &appContext.useColorMap);
+    ImGui:: DragFloat("Error Margin", &appContext.errorMargin, 0.05, 0.05, 5);
 
     ImGui::SeparatorText("Error Messages");
     char *errors = vectorToCharPointer(appContext.errorMessages);
@@ -197,6 +198,7 @@ void Gui::render() {
 
     ImGui::Begin("Path Generation");
     ImGui::BeginDisabled(appContext.patchesC0.empty() && appContext.patchesC2.empty());
+    ImGui::Text("Path length: %f", appContext.mill->getPath().empty()? 0 : appContext.mill->pathLength);
 
     ImGui::DragInt("Every nth path point", &appContext.everyNthPathPoint, 1, 1, 100);
     if(ImGui::Button("Generate K16 path")) {
@@ -216,6 +218,12 @@ void Gui::render() {
     }
     if(ImGui::Button("Generate Intersections K08 path")) {
         appContext.pathGenerator->generatePathAnalyticalK08Inter();
+    }
+    if(ImGui::Button("Generate Full F10 path")) {
+        appContext.pathGenerator->generatePathFullF10();
+    }
+    if(ImGui::Button("Generate Full K08 path")) {
+        appContext.pathGenerator->generatePathFullK08();
     }
     ImGui::EndDisabled();
     ImGui::BeginDisabled(appContext.mill->getPath().empty());
@@ -337,14 +345,9 @@ void Gui::renderMainMenu() {
                     setupPath(path);
                 });
             }
-            if(ImGui::MenuItem("Import Model")) {
+            if(ImGui::MenuItem("Append Path")) {
                 openNfd([&](const std::string &path) {
-                    appContext.modelSerializer->importModel(appContext, path);
-                });
-            }
-            if(ImGui::MenuItem("Import Helper")) {
-                openNfd([&](const std::string &path) {
-                    appContext.modelSerializer->importHelper(appContext, path, {});
+                    appendPath(path);
                 });
             }
             ImGui::EndMenu();
@@ -377,6 +380,42 @@ void Gui::setupPath(const std::string& outPath) {
 
     std::vector<PositionVertex> vertices;
     std::transform(points.begin(), points.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+
+    appContext.pathOffset = {};
+    appContext.pathScale = 1;
+    appContext.pathRotation = 0;
+
+    appContext.running = false;
+}
+
+void Gui::appendPath(const std::string &outPath) {
+    std::string millType = outPath.substr(outPath.size()-3, 1);
+    switch(millType[0]) {
+        case 'k':
+            appContext.mill->setType(Spherical);
+        break;
+        case 'f':
+            appContext.mill->setType(Flat);
+        break;
+        default:
+            throw std::runtime_error("Wrong file extension");
+    }
+
+    std::string millDiameter = outPath.substr(outPath.size()-2, 2);
+    float millRadius = std::stoi(millDiameter) / 2.f;
+    appContext.mill->setRadius(millRadius);
+    appContext.mill->setHeight(millRadius*6);
+
+    auto points = appContext.gCodeParser->parse(outPath);
+    auto current = appContext.mill->getPath();
+    current.insert(current.end(), points.begin(), points.end());
+    appContext.mill->setPath(current);
+    appContext.lastFrameTime = glfwGetTime();
+
+    std::vector<PositionVertex> vertices;
+    std::transform(current.begin(), current.end(), std::back_inserter(vertices),
                    [](glm::vec3 v){ return PositionVertex(v);});
     appContext.pathModel->update(std::move(vertices), std::nullopt);
 

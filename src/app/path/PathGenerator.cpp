@@ -24,6 +24,19 @@ PathGenerator::PathGenerator(AppContext &appContext) : appContext(appContext) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mTexId, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+void PathGenerator::setupPathGeneration() {
+    path = {};
+}
+
+void PathGenerator::endPathGeneration() {
+    appContext.mill->setPath(path);
+    std::vector<PositionVertex> vertices;
+    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
+                   [](glm::vec3 v){ return PositionVertex(v);});
+    appContext.pathModel->update(std::move(vertices), std::nullopt);
+    appContext.running = false;
+}
+
 
 void PathGenerator::generatePathK16() {
     render();
@@ -144,7 +157,6 @@ void PathGenerator::generatePathF10() {
     int tracks;
     float advanceX;
 
-    std::vector<glm::vec3> path;
     path.emplace_back(0, startingY, 0);
     glm::vec3 mill;
 
@@ -260,13 +272,6 @@ void PathGenerator::generatePathF10() {
     path.emplace_back(mill);
     path.emplace_back(0, startingY, 0);
 
-    appContext.mill->setPath(path);
-    std::vector<PositionVertex> vertices;
-    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
-                   [](glm::vec3 v){ return PositionVertex(v);});
-    appContext.pathModel->update(std::move(vertices), std::nullopt);
-    appContext.running = false;
-
     appContext.mill->setRadius(radiusF10);
     appContext.mill->setType(Flat);
 
@@ -338,9 +343,6 @@ bool doSegmentsIntersect(const glm::vec2& a1, const glm::vec2& a2, const glm::ve
 void PathGenerator::generatePathAnalyticalF10() {
     float radiusF10 = 5.0f;
 
-
-
-    std::vector<glm::vec3> path;
     path.emplace_back(0, 66, 0);
     path.emplace_back(-87, 66, -87);
     path.emplace_back(-87, 15, -87);
@@ -418,13 +420,6 @@ void PathGenerator::generatePathAnalyticalF10() {
     path.emplace_back(path.back().x, 66, path.back().z);
     path.emplace_back(0, 66, 0);
 
-    appContext.mill->setPath(path);
-    std::vector<PositionVertex> vertices;
-    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
-                   [](glm::vec3 v){ return PositionVertex(v);});
-    appContext.pathModel->update(std::move(vertices), std::nullopt);
-    appContext.running = false;
-
     appContext.mill->setRadius(radiusF10);
     appContext.mill->setType(Flat);
 
@@ -436,7 +431,6 @@ void PathGenerator::generatePathAnalyticalF10() {
 void PathGenerator::generatePathAnalyticalK08Eye() {
     float radiusK08 = 4;
 
-    std::vector<glm::vec3> path;
     path.emplace_back(0, 66, 0);
 
     auto &path1 = appContext.outlines["inside_bottom"];
@@ -470,13 +464,6 @@ void PathGenerator::generatePathAnalyticalK08Eye() {
     path.emplace_back(path.back().x, 66, path.back().z);
     path.emplace_back(0, 66, 0);
 
-    appContext.mill->setPath(path);
-    std::vector<PositionVertex> vertices;
-    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
-                   [](glm::vec3 v){ return PositionVertex(v);});
-    appContext.pathModel->update(std::move(vertices), std::nullopt);
-    appContext.running = false;
-
     appContext.mill->setRadius(radiusK08);
     appContext.mill->setType(Spherical);
 
@@ -488,7 +475,6 @@ void PathGenerator::generatePathAnalyticalK08Eye() {
 void PathGenerator::generatePathAnalyticalK08() {
     float radiusK08 = 4;
 
-    std::vector<glm::vec3> path;
     path.emplace_back(0, 66, 0);
 
     int everyNth = 0;
@@ -528,8 +514,21 @@ void PathGenerator::generatePathAnalyticalK08() {
     };
 
     float uStep = 0.015;
-    float vStep = 0.005;
-    glm::vec2 step = {uStep, vStep};
+    float vStep = 0.014;
+    float uSmallStep = 0.015;
+    float vSmallStep = 0.008;
+    std::vector<std::pair<float, float>> steps {
+    {uStep, vStep},
+    {uSmallStep, vSmallStep},
+    {uSmallStep, vSmallStep},
+    {uStep, vStep},
+    {uStep, vStep},
+    {uStep, vStep},
+    {uStep, vStep},
+    {uStep, vStep},
+    {uStep, vStep},
+    };
+
     glm::vec2 alongDir = {1, 0};
     glm::vec2 perpDir = {0, 1};
 
@@ -549,6 +548,7 @@ void PathGenerator::generatePathAnalyticalK08() {
     };
 
     for(int p = 0; p < names.size(); p++){
+        glm::vec2 step = {steps[p].first, steps[p].second};
         IntersectionMask &mask = *appContext.masks[names[p]];
         auto wings = patches[names[p]];
         for (auto startCursor: startCursors[p]) {
@@ -605,13 +605,6 @@ void PathGenerator::generatePathAnalyticalK08() {
     path.emplace_back(path.back().x, 66, path.back().z);
     path.emplace_back(0, 66, 0);
 
-    appContext.mill->setPath(path);
-    std::vector<PositionVertex> vertices;
-    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
-                   [](glm::vec3 v){ return PositionVertex(v);});
-    appContext.pathModel->update(std::move(vertices), std::nullopt);
-    appContext.running = false;
-
     appContext.mill->setRadius(radiusK08);
     appContext.mill->setType(Spherical);
 
@@ -628,9 +621,6 @@ bool PathGenerator::outsideRange(glm::vec2 cursor) {
 void PathGenerator::generatePathAnalyticalK08Inter() {
     float radiusK08 = 4.0f;
 
-
-
-    std::vector<glm::vec3> path;
     path.emplace_back(0, 66, 0);
 
     std::vector<PatchC2*> patches {
@@ -675,6 +665,7 @@ void PathGenerator::generatePathAnalyticalK08Inter() {
             if (skip) break;
             if(everyNth++ % appContext.everyNthPathPoint == 0) {
                 point.y -= radiusK08;
+                if(i == 4) point.y += 0.2;
                 path.emplace_back(point);
             }
         }
@@ -683,17 +674,25 @@ void PathGenerator::generatePathAnalyticalK08Inter() {
     path.emplace_back(path.back().x, 66, path.back().z);
     path.emplace_back(0, 66, 0);
 
-    appContext.mill->setPath(path);
-    std::vector<PositionVertex> vertices;
-    std::transform(path.begin(), path.end(), std::back_inserter(vertices),
-                   [](glm::vec3 v){ return PositionVertex(v);});
-    appContext.pathModel->update(std::move(vertices), std::nullopt);
-    appContext.running = false;
-
     appContext.mill->setRadius(radiusK08);
     appContext.mill->setType(Spherical);
 
     appContext.pathOffset = {};
     appContext.pathScale = 1;
     appContext.pathRotation = 0;
+}
+
+void PathGenerator::generatePathFullF10() {
+    setupPathGeneration();
+    generatePathF10();
+    generatePathAnalyticalF10();
+    endPathGeneration();
+}
+
+void PathGenerator::generatePathFullK08() {
+    setupPathGeneration();
+    generatePathAnalyticalK08Eye();
+    generatePathAnalyticalK08();
+    generatePathAnalyticalK08Inter();
+    endPathGeneration();
 }

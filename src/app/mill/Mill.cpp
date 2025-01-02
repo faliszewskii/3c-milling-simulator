@@ -243,6 +243,12 @@ void Mill::setPosition(glm::vec3 newPosition) {
 
 void Mill::setPath(std::vector<glm::vec3> newPath) {
     path = std::move(newPath);
+    float totalLength = 0;
+    for(int i = 1; i < path.size(); i++) {
+        float length = glm::length(path[i] - path[i - 1]);
+        totalLength += length;
+    }
+    pathLength = totalLength;
     currentPoint = 0;
     tMillPath = 0;
 }

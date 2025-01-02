@@ -35,6 +35,8 @@ class Mill {
     std::mutex positionMutex;
 
 public:
+    float pathLength;
+
     Mill(float height, float radius, glm::vec3 position, float velocity, float minAngleDescend, float minHeight);
 
     void startInstant(std::vector<std::vector<float>> &heightMap, glm::vec3 baseDimensions);
